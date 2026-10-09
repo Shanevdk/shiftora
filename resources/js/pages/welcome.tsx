@@ -59,9 +59,11 @@ const features = [
 ];
 
 export default function Welcome({
+    pageTitle,
     plans,
     trialDays,
 }: {
+    pageTitle: string;
     plans: Plan[];
     trialDays: number;
 }) {
@@ -72,7 +74,7 @@ export default function Welcome({
 
     return (
         <>
-            <Head title="Time tracking and scheduling for shift teams" />
+            <Head title={pageTitle} />
             <div className="min-h-screen bg-background text-foreground">
                 <header className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-5 md:px-6">
                     <Link href="/" className="flex items-center gap-2.5">

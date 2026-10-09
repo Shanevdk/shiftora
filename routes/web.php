@@ -16,6 +16,7 @@ use App\Http\Controllers\PublishScheduleController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\SitemapController;
 use App\Http\Controllers\TimeClockController;
 use App\Http\Controllers\TimeEntryController;
 use App\Http\Controllers\TimesheetController;
@@ -27,6 +28,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', WelcomeController::class)->name('home');
 Route::get('privacy', [LegalController::class, 'privacy'])->name('legal.privacy');
 Route::get('cookies', [LegalController::class, 'cookies'])->name('legal.cookies');
+Route::get('sitemap.xml', [SitemapController::class, 'index'])->name('sitemap');
+Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
 
 Route::post('demo', [DemoController::class, 'store'])->middleware('throttle:5,1')->name('demo.store');
 Route::get('demo/exit', [DemoController::class, 'destroy'])->name('demo.destroy');

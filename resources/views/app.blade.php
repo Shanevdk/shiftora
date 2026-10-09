@@ -40,8 +40,20 @@
         @viteReactRefresh
         @vite(['resources/css/app.css', 'resources/js/app.tsx', "resources/js/pages/{$page['component']}.tsx"])
         <x-inertia::head>
-            <title>{{ config('app.name', 'Laravel') }}</title>
+            <title>{{ $metaTitle ?? config('app.name', 'Laravel') }}</title>
         </x-inertia::head>
+
+        @isset($metaDescription)
+            <meta name="description" content="{{ $metaDescription }}">
+            <link rel="canonical" href="{{ url()->current() }}">
+            <meta property="og:type" content="website">
+            <meta property="og:site_name" content="{{ config('app.name') }}">
+            <meta property="og:title" content="{{ $metaTitle }}">
+            <meta property="og:description" content="{{ $metaDescription }}">
+            <meta property="og:url" content="{{ url()->current() }}">
+            <meta property="og:image" content="{{ asset('apple-touch-icon.png') }}">
+            <meta name="twitter:card" content="summary">
+        @endisset
     </head>
     <body class="font-sans antialiased">
         <x-inertia::app />
