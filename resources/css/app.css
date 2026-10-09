@@ -1,0 +1,176 @@
+@import 'tailwindcss';
+
+@import 'tw-animate-css';
+
+@source '../views';
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+    --font-sans:
+        'Instrument Sans', ui-sans-serif, system-ui, sans-serif,
+        'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
+        'Noto Color Emoji';
+
+    --radius-lg: var(--radius);
+    --radius-md: calc(var(--radius) - 2px);
+    --radius-sm: calc(var(--radius) - 4px);
+
+    --color-background: var(--background);
+    --color-foreground: var(--foreground);
+
+    --color-card: var(--card);
+    --color-card-foreground: var(--card-foreground);
+
+    --color-popover: var(--popover);
+    --color-popover-foreground: var(--popover-foreground);
+
+    --color-primary: var(--primary);
+    --color-primary-foreground: var(--primary-foreground);
+
+    --color-secondary: var(--secondary);
+    --color-secondary-foreground: var(--secondary-foreground);
+
+    --color-muted: var(--muted);
+    --color-muted-foreground: var(--muted-foreground);
+
+    --color-accent: var(--accent);
+    --color-accent-foreground: var(--accent-foreground);
+
+    --color-destructive: var(--destructive);
+    --color-destructive-foreground: var(--destructive-foreground);
+
+    --color-border: var(--border);
+    --color-input: var(--input);
+    --color-ring: var(--ring);
+
+    --color-chart-1: var(--chart-1);
+    --color-chart-2: var(--chart-2);
+    --color-chart-3: var(--chart-3);
+    --color-chart-4: var(--chart-4);
+    --color-chart-5: var(--chart-5);
+
+    --color-sidebar: var(--sidebar);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-ring: var(--sidebar-ring);
+
+    /* Shiftora brand palette */
+    --color-charcoal: #1e2124;
+    --color-warm-white: #faf8f3;
+    --color-slate-grey: #5f6b76;
+    --color-forest: #2d6a4f;
+    --color-forest-light: #4fa37a;
+
+    --color-success: var(--success);
+    --color-success-foreground: var(--success-foreground);
+    --color-warning: var(--warning);
+    --color-warning-foreground: var(--warning-foreground);
+}
+
+/*
+ * Shiftora design tokens.
+ * Light: warm-white canvas, charcoal text and chrome, slate-grey secondary text, forest-green actions.
+ * Dark: charcoal canvas with warm-white text and a lifted forest green for contrast.
+ */
+:root {
+    --background: #faf8f3;
+    --foreground: #1e2124;
+    --card: #ffffff;
+    --card-foreground: #1e2124;
+    --popover: #ffffff;
+    --popover-foreground: #1e2124;
+    --primary: #2d6a4f;
+    --primary-foreground: #faf8f3;
+    --secondary: #efece4;
+    --secondary-foreground: #1e2124;
+    --muted: #f1eee7;
+    --muted-foreground: #5f6b76;
+    --accent: #e6efe9;
+    --accent-foreground: #1f4d39;
+    --destructive: #b42318;
+    --destructive-foreground: #b42318;
+    --success: #2d6a4f;
+    --success-foreground: #e6efe9;
+    --warning: #b7791f;
+    --warning-foreground: #fdf4e3;
+    --border: #e4e0d6;
+    --input: #dcd8cd;
+    --ring: #2d6a4f;
+    --chart-1: #2d6a4f;
+    --chart-2: #5f6b76;
+    --chart-3: #8db59c;
+    --chart-4: #c08a3e;
+    --chart-5: #1e2124;
+    --radius: 0.625rem;
+    --sidebar: #1e2124;
+    --sidebar-foreground: #e9e6df;
+    --sidebar-primary: #4fa37a;
+    --sidebar-primary-foreground: #faf8f3;
+    --sidebar-accent: #2b2f33;
+    --sidebar-accent-foreground: #faf8f3;
+    --sidebar-border: #33383d;
+    --sidebar-ring: #4fa37a;
+}
+
+.dark {
+    --background: #15171a;
+    --foreground: #ece9e2;
+    --card: #1c1f22;
+    --card-foreground: #ece9e2;
+    --popover: #1c1f22;
+    --popover-foreground: #ece9e2;
+    --primary: #4fa37a;
+    --primary-foreground: #0f1a14;
+    --secondary: #262a2e;
+    --secondary-foreground: #ece9e2;
+    --muted: #23272b;
+    --muted-foreground: #9aa4ae;
+    --accent: #1f3329;
+    --accent-foreground: #cfe6d8;
+    --destructive: #e5484d;
+    --destructive-foreground: #ff8f8f;
+    --success: #4fa37a;
+    --success-foreground: #0f1a14;
+    --warning: #e0a84a;
+    --warning-foreground: #2a1d08;
+    --border: #2d3136;
+    --input: #353a40;
+    --ring: #4fa37a;
+    --chart-1: #4fa37a;
+    --chart-2: #9aa4ae;
+    --chart-3: #8db59c;
+    --chart-4: #e0a84a;
+    --chart-5: #ece9e2;
+    --sidebar: #101214;
+    --sidebar-foreground: #e9e6df;
+    --sidebar-primary: #4fa37a;
+    --sidebar-primary-foreground: #0f1a14;
+    --sidebar-accent: #23272b;
+    --sidebar-accent-foreground: #faf8f3;
+    --sidebar-border: #2a2e33;
+    --sidebar-ring: #4fa37a;
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+
+    body {
+        @apply bg-background text-foreground;
+    }
+
+    :focus-visible {
+        @apply outline-ring;
+    }
+}
+
+@utility tabular {
+    font-variant-numeric: tabular-nums;
+}
