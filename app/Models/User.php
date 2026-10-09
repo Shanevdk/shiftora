@@ -23,6 +23,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property int $id
  * @property string $name
  * @property string $email
+ * @property string|null $google_id
  * @property bool $is_demo
  * @property int|null $current_organization_id
  * @property Carbon|null $email_verified_at

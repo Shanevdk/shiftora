@@ -10,19 +10,27 @@ import { Spinner } from '@/components/ui/spinner';
 import { register } from '@/routes';
 import { store } from '@/routes/login';
 import { request } from '@/routes/password';
+import GoogleSignIn from '@/components/google-sign-in';
 import PasskeyVerify from '@/components/passkey-verify';
 
 type Props = {
     status?: string;
     canResetPassword: boolean;
+    googleSignInEnabled: boolean;
 };
 
-export default function Login({ status, canResetPassword }: Props) {
+export default function Login({
+    status,
+    canResetPassword,
+    googleSignInEnabled,
+}: Props) {
     return (
         <>
             <Head title="Log in" />
 
-            <PasskeyVerify />
+            <PasskeyVerify separator={googleSignInEnabled ? 'Or' : undefined} />
+
+            {googleSignInEnabled && <GoogleSignIn />}
 
             <Form
                 {...store.form()}
