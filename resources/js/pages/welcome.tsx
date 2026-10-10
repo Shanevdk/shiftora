@@ -13,7 +13,7 @@ import AppLogoIcon from '@/components/app-logo-icon';
 import LiveDemo from '@/components/live-demo';
 import SiteFooter from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
-import { formatCurrency } from '@/lib/time';
+import { formatCurrency, formatDate } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { dashboard, login, register } from '@/routes';
 import { destroy as leaveDemo } from '@/routes/demo';
@@ -62,10 +62,12 @@ export default function Welcome({
     pageTitle,
     plans,
     trialDays,
+    freeUntil,
 }: {
     pageTitle: string;
     plans: Plan[];
     trialDays: number;
+    freeUntil: string | null;
 }) {
     const { auth } = usePage().props;
     const isDemo = auth.user?.is_demo === true;
@@ -202,6 +204,7 @@ export default function Welcome({
                                 with a {trialDays}-day free trial.
                             </p>
                         </div>
+                        {freeUntil && <FreePromotionBanner until={freeUntil} />}
                         <div className="mt-12 grid gap-6 lg:grid-cols-3">
                             {plans.map((plan) => (
                                 <PlanCard
@@ -262,6 +265,28 @@ export default function Welcome({
                 <SiteFooter />
             </div>
         </>
+    );
+}
+
+/**
+ * The launch promotion, shown across the top of the pricing plans.
+ */
+function FreePromotionBanner({ until }: { until: string }) {
+    return (
+        <div className="mt-10 flex flex-col items-center gap-1 rounded-2xl bg-red-600 px-6 py-5 text-center text-white shadow-lg sm:flex-row sm:justify-center sm:gap-4">
+            <p className="text-2xl font-bold tracking-tight uppercase sm:text-3xl">
+                Free till {until.slice(0, 4)}
+            </p>
+            <p className="text-sm text-white/90 sm:text-base">
+                Every plan costs nothing until{' '}
+                {formatDate(until, {
+                    month: 'long',
+                    day: 'numeric',
+                    year: 'numeric',
+                })}
+                .
+            </p>
+        </div>
     );
 }
 

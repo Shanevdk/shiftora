@@ -1,5 +1,7 @@
 <?php
 
+use Inertia\Testing\AssertableInertia as Assert;
+
 test('returns a successful response', function () {
     $response = $this->get(route('home'));
 
@@ -18,4 +20,27 @@ test('the homepage has a descriptive title and meta description in its HTML', fu
 
 test('other pages do not reuse the homepage description', function () {
     $this->get(route('login'))->assertDontSee('<meta name="description"', escape: false);
+});
+
+test('the homepage shows the free-until banner date only while the promotion runs', function () {
+    config(['shiftora.free_until' => now()->addMonth()->toDateString()]);
+
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('freeUntil', now()->addMonth()->toDateString()));
+
+    config(['shiftora.free_until' => now()->subDay()->toDateString()]);
+
+    $this->get(route('home'))->assertInertia(fn (Assert $page) => $page->where('freeUntil', null));
+});
+
+test('the homepage tells search engines which logo to show', function () {
+    $html = $this->get(route('home'))->getContent();
+
+    preg_match('#<script type="application/ld\+json">(.*?)</script>#s', $html, $matches);
+    $structuredData = json_decode(trim($matches[1]), true, flags: JSON_THROW_ON_ERROR);
+    $organization = $structuredData['@graph'][0];
+
+    expect($structuredData['@context'])->toBe('https://schema.org')
+        ->and($organization['@type'])->toBe('Organization')
+        ->and($organization['logo'])->toBe(asset('logo.png'))
+        ->and(file_exists(public_path('logo.png')))->toBeTrue();
 });

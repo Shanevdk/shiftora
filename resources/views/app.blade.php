@@ -51,8 +51,12 @@
             <meta property="og:title" content="{{ $metaTitle }}">
             <meta property="og:description" content="{{ $metaDescription }}">
             <meta property="og:url" content="{{ url()->current() }}">
-            <meta property="og:image" content="{{ asset('apple-touch-icon.png') }}">
+            <meta property="og:image" content="{{ asset('logo.png') }}">
             <meta name="twitter:card" content="summary">
+            {{-- Tells Google which logo and site name to show for Shiftora in search results. --}}
+            @isset($structuredData)
+                <script type="application/ld+json">{!! $structuredData !!}</script>
+            @endisset
         @endisset
     </head>
     <body class="font-sans antialiased">
