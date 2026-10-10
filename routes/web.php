@@ -1,7 +1,7 @@
 <?php
 
+use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\AuditLogController;
-use App\Http\Controllers\Auth\GoogleAuthController;
 use App\Http\Controllers\CurrentOrganizationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
@@ -35,11 +35,6 @@ Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
 Route::post('demo', [DemoController::class, 'store'])->middleware('throttle:5,1')->name('demo.store');
 Route::get('demo/exit', [DemoController::class, 'destroy'])->name('demo.destroy');
 
-Route::middleware(['guest', 'throttle:10,1'])->group(function () {
-    Route::get('auth/google/redirect', [GoogleAuthController::class, 'redirect'])->name('auth.google.redirect');
-    Route::get('auth/google/callback', [GoogleAuthController::class, 'callback'])->name('auth.google.callback');
-});
-
 Route::middleware('signed')->group(function () {
     Route::get('invitations/{employee}', [InvitationController::class, 'show'])->name('invitations.show');
     Route::post('invitations/{employee}', [InvitationController::class, 'store'])
@@ -47,7 +42,11 @@ Route::middleware('signed')->group(function () {
         ->name('invitations.store');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
+    Route::get('admin', AdminDashboardController::class)
+        ->middleware('can:viewAdminDashboard')
+        ->name('admin.dashboard');
+
     Route::get('onboarding', [OnboardingController::class, 'create'])->name('onboarding.create');
     Route::post('onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 

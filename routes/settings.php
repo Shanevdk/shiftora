@@ -15,7 +15,7 @@ Route::middleware(['auth'])->group(function () {
     Route::patch('settings/profile', [ProfileController::class, 'update'])->middleware('not-demo')->name('profile.update');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware('auth')->group(function () {
     Route::delete('settings/profile', [ProfileController::class, 'destroy'])->middleware('not-demo')->name('profile.destroy');
 
     Route::get('settings/security', [SecurityController::class, 'edit'])

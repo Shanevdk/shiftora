@@ -70,10 +70,7 @@ export default function Privacy({
                             <strong>Account details:</strong> your name, email
                             address and password (stored only as a one-way
                             hash), plus two-factor authentication and passkey
-                            credentials if you turn them on. If you sign in with
-                            Google, Google shares your name, email address and
-                            account ID with us. We do not get access to your
-                            Gmail, contacts or files.
+                            credentials if you turn them on.
                         </li>
                         <li>
                             <strong>Organization details:</strong> business

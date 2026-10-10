@@ -29,7 +29,7 @@ class SitemapController extends Controller
      */
     public function robots(): Response
     {
-        $disallowedPaths = ['/dashboard', '/time-clock', '/schedule', '/timesheets', '/employees', '/reports', '/audit-log', '/settings', '/onboarding', '/invitations', '/auth/'];
+        $disallowedPaths = ['/dashboard', '/time-clock', '/schedule', '/timesheets', '/employees', '/reports', '/audit-log', '/settings', '/onboarding', '/invitations', '/admin'];
 
         $lines = [
             'User-agent: *',

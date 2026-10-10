@@ -7,11 +7,13 @@ use App\Models\Organization;
 use App\Models\Shift;
 use App\Models\TimeEntry;
 use App\Models\Timesheet;
+use App\Models\User;
 use App\Support\CurrentOrganization;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Relations\Relation;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
@@ -34,6 +36,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDefaults();
         $this->configureBilling();
+        $this->configureAuthorization();
 
         Relation::morphMap([
             'employee' => Employee::class,
@@ -41,6 +44,14 @@ class AppServiceProvider extends ServiceProvider
             'time_entry' => TimeEntry::class,
             'timesheet' => Timesheet::class,
         ]);
+    }
+
+    /**
+     * Platform-level abilities that sit outside any one organization.
+     */
+    protected function configureAuthorization(): void
+    {
+        Gate::define('viewAdminDashboard', fn (User $user): bool => $user->is_admin);
     }
 
     /**

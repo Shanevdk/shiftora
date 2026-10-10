@@ -1,10 +1,11 @@
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
     CalendarDays,
     ClipboardCheck,
     Clock,
     Cookie,
+    Gauge,
     History,
     LayoutGrid,
     ShieldCheck,
@@ -26,6 +27,7 @@ import {
 } from '@/components/ui/sidebar';
 import { useWorkspace } from '@/hooks/use-workspace';
 import { dashboard } from '@/routes';
+import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as auditLog } from '@/routes/audit-log';
 import { index as employees } from '@/routes/employees';
 import { cookies, privacy } from '@/routes/legal';
@@ -37,6 +39,7 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { organization, can, hasFeature } = useWorkspace();
+    const { auth } = usePage().props;
 
     const workNavItems: NavItem[] = organization
         ? [
@@ -71,6 +74,10 @@ export function AppSidebar() {
             : []),
     ];
 
+    const adminNavItems: NavItem[] = auth.user?.is_admin
+        ? [{ title: 'Admin', href: adminDashboard(), icon: Gauge }]
+        : [];
+
     const legalNavItems: NavItem[] = [
         { title: 'Privacy policy', href: privacy(), icon: ShieldCheck },
         { title: 'Cookie policy', href: cookies(), icon: Cookie },
@@ -99,6 +106,9 @@ export function AppSidebar() {
                 )}
                 {manageNavItems.length > 0 && (
                     <NavMain label="Manage" items={manageNavItems} />
+                )}
+                {adminNavItems.length > 0 && (
+                    <NavMain label="Platform" items={adminNavItems} />
                 )}
                 <NavFooter items={legalNavItems} className="mt-auto" />
             </SidebarContent>

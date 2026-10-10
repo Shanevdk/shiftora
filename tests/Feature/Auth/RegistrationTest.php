@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Notification;
 use Laravel\Fortify\Features;
 
 beforeEach(function () {
@@ -22,4 +23,18 @@ test('new users can register', function () {
 
     $this->assertAuthenticated();
     $response->assertRedirect(route('dashboard', absolute: false));
+});
+
+test('new users are not sent a verification email and can start using the app right away', function () {
+    Notification::fake();
+
+    $this->post(route('register.store'), [
+        'name' => 'Test User',
+        'email' => 'test@example.com',
+        'password' => 'password',
+        'password_confirmation' => 'password',
+    ]);
+
+    Notification::assertNothingSent();
+    $this->get(route('onboarding.create'))->assertOk();
 });
