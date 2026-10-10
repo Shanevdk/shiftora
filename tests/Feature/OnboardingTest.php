@@ -23,7 +23,7 @@ test('a new user creates an organization on a free trial as its owner', function
         ->timezone->toBe('America/Toronto')
         ->plan->toBe(Plan::Starter)
         ->and($organization->onGenericTrial())->toBeTrue()
-        ->and($organization->trial_ends_at->isSameDay(now()->addDays(14)))->toBeTrue()
+        ->and($organization->trial_ends_at->isSameDay(now()->addDays(2)))->toBeTrue()
         ->and($organization->locations()->count())->toBe(1);
 
     $owner = $organization->employees()->sole();

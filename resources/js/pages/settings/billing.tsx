@@ -4,6 +4,7 @@ import {
     Check,
     CreditCard,
     ExternalLink,
+    Gift,
     Lock,
 } from 'lucide-react';
 import { useState } from 'react';
@@ -29,7 +30,13 @@ import { cn } from '@/lib/utils';
 import { checkout, edit, portal, swap } from '@/routes/billing';
 import type { Plan, PlanKey } from '@/types';
 
-type BillingStatus = 'active' | 'trial' | 'canceled' | 'past_due' | 'inactive';
+type BillingStatus =
+    | 'active'
+    | 'trial'
+    | 'free'
+    | 'canceled'
+    | 'past_due'
+    | 'inactive';
 
 type BillingPlan = Plan & { available: boolean };
 
@@ -39,6 +46,7 @@ type Billing = {
     status: BillingStatus;
     trial_ends_at: string | null;
     trial_days_remaining: number | null;
+    free_until: string | null;
     ends_at: string | null;
     quantity: number | null;
     card_last_four: string | null;
@@ -59,6 +67,16 @@ const longDate: Intl.DateTimeFormatOptions = {
     year: 'numeric',
 };
 
+/**
+ * The free promotion ends at midnight UTC, so format it in UTC to avoid showing the day before.
+ */
+function formatFreeUntil(
+    iso: string,
+    options: Intl.DateTimeFormatOptions = longDate,
+): string {
+    return formatDateTimeDay(iso, 'UTC', options);
+}
+
 export default function BillingSettings({
     plans,
     billing,
@@ -66,11 +84,13 @@ export default function BillingSettings({
     billingConfigured,
 }: Props) {
     const { timeZone } = useWorkspace();
-    const isSubscribed = ['active', 'canceled', 'past_due'].includes(
+    const isSubscribed = ['active', 'free', 'canceled', 'past_due'].includes(
         billing.status,
     );
     const currentPlanKey = billing.plan ?? billing.trial_plan;
     const currentPlan = plans.find((plan) => plan.value === currentPlanKey);
+    const freeUntil = billing.free_until;
+    const isFreeNow = freeUntil !== null && billing.status !== 'inactive';
 
     return (
         <>
@@ -176,17 +196,22 @@ export default function BillingSettings({
                                 Monthly estimate
                             </dt>
                             <dd className="text-lg font-semibold tabular">
-                                {currentPlan && billing.status !== 'inactive'
-                                    ? formatCurrency(
-                                          currentPlan.price_per_employee_cents *
-                                              billing.active_employee_count,
-                                      )
-                                    : '—'}
+                                {isFreeNow
+                                    ? formatCurrency(0)
+                                    : currentPlan &&
+                                        billing.status !== 'inactive'
+                                      ? formatCurrency(
+                                            currentPlan.price_per_employee_cents *
+                                                billing.active_employee_count,
+                                        )
+                                      : '—'}
                             </dd>
                             <dd className="text-xs text-muted-foreground">
-                                {currentPlan
-                                    ? `${formatCurrency(currentPlan.price_per_employee_cents)} × ${billing.active_employee_count} active ${billing.active_employee_count === 1 ? 'employee' : 'employees'}`
-                                    : 'Choose a plan to see an estimate'}
+                                {isFreeNow && freeUntil && currentPlan
+                                    ? `Then ${formatCurrency(currentPlan.price_per_employee_cents * billing.active_employee_count)} a month from ${formatFreeUntil(freeUntil)}`
+                                    : currentPlan
+                                      ? `${formatCurrency(currentPlan.price_per_employee_cents)} × ${billing.active_employee_count} active ${billing.active_employee_count === 1 ? 'employee' : 'employees'}`
+                                      : 'Choose a plan to see an estimate'}
                             </dd>
                         </div>
                         <div className="space-y-1 p-4 sm:p-6">
@@ -213,7 +238,9 @@ export default function BillingSettings({
                                 )}
                             </dd>
                             <dd className="text-xs text-muted-foreground">
-                                Billed monthly per active employee
+                                {freeUntil
+                                    ? `Not charged until ${formatFreeUntil(freeUntil)}`
+                                    : 'Billed monthly per active employee'}
                             </dd>
                         </div>
                     </dl>
@@ -240,32 +267,39 @@ export default function BillingSettings({
                     </p>
                 )}
 
-                <div className="grid gap-6 pt-3 lg:grid-cols-3">
-                    {plans.map((plan) => (
-                        <PlanCard
-                            key={plan.value}
-                            plan={plan}
-                            isCurrent={
-                                billing.status !== 'inactive' &&
-                                plan.value === currentPlanKey
-                            }
-                            currentLabel={
-                                billing.status === 'trial'
-                                    ? 'Your trial'
-                                    : 'Current plan'
-                            }
-                            action={
-                                canManage ? (
-                                    <PlanAction
-                                        plan={plan}
-                                        billing={billing}
-                                        isSubscribed={isSubscribed}
-                                        billingConfigured={billingConfigured}
-                                    />
-                                ) : null
-                            }
-                        />
-                    ))}
+                <div>
+                    {freeUntil && <FreeBanner freeUntil={freeUntil} />}
+
+                    <div className="grid gap-6 pt-3 lg:grid-cols-3">
+                        {plans.map((plan) => (
+                            <PlanCard
+                                key={plan.value}
+                                plan={plan}
+                                freeUntil={freeUntil}
+                                isCurrent={
+                                    billing.status !== 'inactive' &&
+                                    plan.value === currentPlanKey
+                                }
+                                currentLabel={
+                                    billing.status === 'trial'
+                                        ? 'Your trial'
+                                        : 'Current plan'
+                                }
+                                action={
+                                    canManage ? (
+                                        <PlanAction
+                                            plan={plan}
+                                            billing={billing}
+                                            isSubscribed={isSubscribed}
+                                            billingConfigured={
+                                                billingConfigured
+                                            }
+                                        />
+                                    ) : null
+                                }
+                            />
+                        ))}
+                    </div>
                 </div>
             </div>
         </>
@@ -287,6 +321,15 @@ function StatusBadge({ billing }: { billing: Billing }) {
             return (
                 <Badge className="bg-accent text-accent-foreground">
                     Free trial
+                </Badge>
+            );
+        case 'free':
+            return (
+                <Badge className="bg-primary text-primary-foreground">
+                    <Gift aria-hidden="true" />
+                    Free
+                    {billing.free_until &&
+                        ` till ${formatFreeUntil(billing.free_until, { year: 'numeric' })}`}
                 </Badge>
             );
         case 'active':
@@ -331,9 +374,17 @@ function StatusDetail({
                 ? 'Your trial ends today'
                 : `${days} ${days === 1 ? 'day' : 'days'} left in your trial`;
 
+        const nextStep = billing.free_until
+            ? `Choose a plan and add your card to keep going. You won't be charged until ${formatFreeUntil(billing.free_until)}.`
+            : 'Choose a plan to keep going without interruption.';
+
         detail = billing.trial_ends_at
-            ? `${remaining} (ends ${formatDateTimeDay(billing.trial_ends_at, timeZone, longDate)}). Choose a plan to keep going without interruption.`
+            ? `${remaining} (ends ${formatDateTimeDay(billing.trial_ends_at, timeZone, longDate)}). ${nextStep}`
             : remaining;
+    } else if (billing.status === 'free') {
+        detail = billing.free_until
+            ? `You're all set. Your card won't be charged until ${formatFreeUntil(billing.free_until)}.`
+            : "You're all set.";
     } else if (billing.status === 'canceled') {
         detail = billing.ends_at
             ? `Your subscription is canceled and ends on ${formatDateTimeDay(billing.ends_at, timeZone, longDate)}. Resume it from Manage billing.`
@@ -350,13 +401,35 @@ function StatusDetail({
     return <p className="text-sm text-muted-foreground">{detail}</p>;
 }
 
+/**
+ * Sits over the plan picker while new subscriptions are free until the launch promotion ends.
+ */
+function FreeBanner({ freeUntil }: { freeUntil: string }) {
+    return (
+        <div className="relative z-10 mb-4 flex flex-col items-center gap-3 rounded-2xl bg-primary px-6 py-5 text-center text-primary-foreground shadow-lg sm:flex-row sm:gap-5 sm:text-left">
+            <Gift className="size-8 shrink-0" aria-hidden="true" />
+            <div className="space-y-1">
+                <p className="text-3xl font-bold tracking-tight sm:text-4xl">
+                    Free till {formatFreeUntil(freeUntil, { year: 'numeric' })}
+                </p>
+                <p className="text-sm text-primary-foreground/85">
+                    Pick a plan and add your card. You won't be charged a cent
+                    until {formatFreeUntil(freeUntil)}.
+                </p>
+            </div>
+        </div>
+    );
+}
+
 function PlanCard({
     plan,
+    freeUntil,
     isCurrent,
     currentLabel,
     action,
 }: {
     plan: BillingPlan;
+    freeUntil: string | null;
     isCurrent: boolean;
     currentLabel: string;
     action: ReactNode;
@@ -390,14 +463,30 @@ function PlanCard({
                 </p>
             </div>
 
-            <div className="flex flex-wrap items-baseline gap-x-1.5">
-                <span className="text-3xl font-semibold tracking-tight tabular">
-                    {formatCurrency(plan.price_per_employee_cents)}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                    / employee / month
-                </span>
-            </div>
+            {freeUntil ? (
+                <div className="space-y-1">
+                    <p className="text-3xl font-semibold tracking-tight text-primary">
+                        Free
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        Then {formatCurrency(plan.price_per_employee_cents)} /
+                        employee / month from{' '}
+                        {formatFreeUntil(freeUntil, {
+                            month: 'short',
+                            year: 'numeric',
+                        })}
+                    </p>
+                </div>
+            ) : (
+                <div className="flex flex-wrap items-baseline gap-x-1.5">
+                    <span className="text-3xl font-semibold tracking-tight tabular">
+                        {formatCurrency(plan.price_per_employee_cents)}
+                    </span>
+                    <span className="text-sm text-muted-foreground">
+                        / employee / month
+                    </span>
+                </div>
+            )}
 
             <p className="text-sm text-muted-foreground">
                 {plan.employee_limit

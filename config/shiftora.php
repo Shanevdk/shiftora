@@ -13,7 +13,14 @@
 
 return [
 
-    'trial_days' => (int) env('SHIFTORA_TRIAL_DAYS', 14),
+    'trial_days' => (int) env('SHIFTORA_TRIAL_DAYS', 2),
+
+    /*
+    | New subscriptions collect a card but are not charged until this date.
+    | Leave it empty to turn the promotion off.
+    */
+
+    'free_until' => env('SHIFTORA_FREE_UNTIL', '2027-01-01'),
 
     'subscription_type' => 'default',
 
@@ -82,7 +89,7 @@ return [
 
     'shift_reminder_lead_minutes' => 60,
 
-    'trial_ending_notice_days' => 3,
+    'trial_ending_notice_days' => 1,
 
     'report_max_days' => 93,
 

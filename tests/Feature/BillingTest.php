@@ -54,3 +54,29 @@ test('plans that are not configured in Stripe cannot be purchased', function () 
         ->post(route('billing.checkout'), ['plan' => 'starter'])
         ->assertSessionHasErrors(['plan' => 'Billing for this plan is not configured yet.']);
 });
+
+test('a subscription started during the promotion shows as free until it ends', function () {
+    config(['shiftora.free_until' => now()->addMonth()->toDateString()]);
+
+    $organization = Organization::factory()->subscribed(Plan::Starter)->create();
+    $organization->subscriptions()->update(['stripe_status' => 'trialing', 'trial_ends_at' => Organization::freeUntil()]);
+
+    $this->actingAs(member(Role::Owner, $organization))
+        ->get(route('billing.edit'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('billing.status', 'free')
+            ->where('billing.plan', 'starter')
+            ->where('billing.free_until', Organization::freeUntil()->toIso8601String()));
+});
+
+test('without a card the workspace locks once the trial ends, even during the promotion', function () {
+    config(['shiftora.free_until' => now()->addMonth()->toDateString()]);
+
+    $owner = member(Role::Owner, Organization::factory()->create(['trial_ends_at' => now()->addDays(2)]));
+
+    $this->actingAs($owner)->get(route('dashboard'))->assertOk();
+
+    $this->travel(3)->days();
+
+    $this->get(route('dashboard'))->assertRedirect(route('billing.edit'));
+});
