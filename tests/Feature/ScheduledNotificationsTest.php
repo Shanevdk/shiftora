@@ -39,7 +39,7 @@ test('managers and the employee hear about entries left open too long', function
 });
 
 test('owners are told when their trial is about to end', function () {
-    $owner = member(Role::Owner, Organization::factory()->create(['trial_ends_at' => now()->addDays(2)]));
+    $owner = member(Role::Owner, Organization::factory()->create(['trial_ends_at' => now()->addHours(12)]));
     member(Role::Owner, Organization::factory()->create(['trial_ends_at' => now()->addDays(10)]));
 
     $this->artisan('shiftora:send-trial-ending-notices')->assertSuccessful();

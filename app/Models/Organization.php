@@ -158,6 +158,24 @@ class Organization extends Model
         return null;
     }
 
+    /**
+     * The date new subscriptions are first charged, or null when the launch promotion is turned off.
+     */
+    public static function freeUntil(): ?Carbon
+    {
+        $freeUntil = config('shiftora.free_until');
+
+        return filled($freeUntil) ? Carbon::parse($freeUntil) : null;
+    }
+
+    /**
+     * Whether new subscriptions currently start with a free trial that lasts until the promotion ends.
+     */
+    public static function onFreePromotion(): bool
+    {
+        return self::freeUntil()?->isFuture() ?? false;
+    }
+
     public function hasActiveAccess(): bool
     {
         return $this->activePlan() !== null;

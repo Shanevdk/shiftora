@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Settings;
 
 use App\Enums\Plan;
 use App\Http\Controllers\Controller;
+use App\Models\Organization;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
@@ -40,11 +41,13 @@ class BillingController extends Controller
                 'status' => match (true) {
                     $subscription?->onGracePeriod() => 'canceled',
                     $subscription?->pastDue() => 'past_due',
+                    $subscription?->onTrial() && Organization::onFreePromotion() => 'free',
                     $organization->isSubscribed() => 'active',
                     $activePlan !== null => 'trial',
                     default => 'inactive',
                 },
                 'trial_ends_at' => $organization->trial_ends_at?->toIso8601String(),
+                'free_until' => Organization::onFreePromotion() ? Organization::freeUntil()->toIso8601String() : null,
                 'trial_days_remaining' => $organization->trialDaysRemaining(),
                 'ends_at' => $subscription?->ends_at?->toIso8601String(),
                 'quantity' => $subscription?->quantity,
@@ -79,9 +82,15 @@ class BillingController extends Controller
                 ->newSubscription(config('shiftora.subscription_type'), $plan->stripePrice())
                 ->quantity(max(1, $organization->activeEmployeeCount()));
 
+            $trialEndsAt = match (true) {
+                Organization::onFreePromotion() => Organization::freeUntil(),
+                $organization->onGenericTrial() => $organization->trial_ends_at,
+                default => null,
+            };
+
             // Stripe Checkout only accepts a trial end at least 48 hours away.
-            if ($organization->onGenericTrial() && $organization->trial_ends_at->isAfter(now()->addDays(2))) {
-                $builder->trialUntil($organization->trial_ends_at);
+            if ($trialEndsAt?->isAfter(now()->addDays(2))) {
+                $builder->trialUntil($trialEndsAt);
             }
 
             $checkout = $builder->checkout([
