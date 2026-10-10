@@ -14,7 +14,8 @@ return [
     |
     */
 
-    'default' => env('MAIL_MAILER', 'log'),
+    // Setting RESEND_API_KEY is enough to start sending through Resend; MAIL_MAILER still wins when set.
+    'default' => env('MAIL_MAILER', env('RESEND_API_KEY') ? 'resend' : 'log'),
 
     /*
     |--------------------------------------------------------------------------

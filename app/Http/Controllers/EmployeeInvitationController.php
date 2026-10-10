@@ -21,7 +21,11 @@ class EmployeeInvitationController extends Controller
             throw ValidationException::withMessages(['email' => __('This employee cannot be invited.')]);
         }
 
-        $inviteEmployee->handle($employee);
+        if (! $inviteEmployee->handle($employee)) {
+            $this->toast(__('The invitation email to :email could not be sent. Please try again later.', ['email' => $employee->email]), 'error');
+
+            return back();
+        }
 
         $this->toast(__('Invitation sent to :email.', ['email' => $employee->email]));
 

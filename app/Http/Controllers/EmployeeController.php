@@ -77,9 +77,13 @@ class EmployeeController extends Controller
             $request->boolean('send_invitation', true),
         );
 
-        $this->toast($employee->invited_at !== null
-            ? __(':name was added and invited by email.', ['name' => $employee->full_name])
-            : __(':name was added to your team.', ['name' => $employee->full_name]));
+        $invitationFailed = $request->boolean('send_invitation', true) && $employee->email !== null && $employee->invited_at === null;
+
+        $this->toast(match (true) {
+            $employee->invited_at !== null => __(':name was added and invited by email.', ['name' => $employee->full_name]),
+            $invitationFailed => __(':name was added, but the invitation email could not be sent. You can resend it from their profile.', ['name' => $employee->full_name]),
+            default => __(':name was added to your team.', ['name' => $employee->full_name]),
+        }, $invitationFailed ? 'warning' : 'success');
 
         return to_route('employees.index');
     }

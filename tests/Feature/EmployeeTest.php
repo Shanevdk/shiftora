@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Organization;
 use App\Notifications\EmployeeInvitation;
 use Illuminate\Notifications\AnonymousNotifiable;
+use Illuminate\Support\Facades\Exceptions;
 use Illuminate\Support\Facades\Notification;
 
 beforeEach(function () {
@@ -89,4 +90,35 @@ test('employee emails must be unique within an organization only', function () {
 
     $this->post(route('employees.store'), ['first_name' => 'Other', 'last_name' => 'Org', 'email' => 'other@example.com', 'role' => 'employee', 'send_invitation' => false])
         ->assertSessionHasNoErrors();
+});
+
+test('a failed invitation email still adds the employee and tells the admin', function () {
+    Exceptions::fake();
+    Notification::shouldReceive('sendNow')->andThrow(new RuntimeException('Resend rejected the request'));
+
+    $this->actingAs($this->admin)
+        ->post(route('employees.store'), [
+            'first_name' => 'Jamie',
+            'last_name' => 'Rivera',
+            'email' => 'jamie@example.com',
+            'role' => 'employee',
+        ])
+        ->assertRedirect(route('employees.index'))
+        ->assertInertiaFlash('toast.type', 'warning');
+
+    expect(Employee::query()->where('first_name', 'Jamie')->sole()->invited_at)->toBeNull();
+    Exceptions::assertReported(RuntimeException::class);
+});
+
+test('resending an invitation reports when the email could not be sent', function () {
+    Exceptions::fake();
+    $employee = Employee::factory()->for($this->organization)->create(['email' => 'casey@example.com']);
+    Notification::shouldReceive('sendNow')->andThrow(new RuntimeException('Resend rejected the request'));
+
+    $this->actingAs($this->admin)
+        ->post(route('employees.invitation.store', $employee))
+        ->assertRedirect()
+        ->assertInertiaFlash('toast.type', 'error');
+
+    expect($employee->refresh()->invited_at)->toBeNull();
 });
