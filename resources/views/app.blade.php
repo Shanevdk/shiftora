@@ -33,6 +33,9 @@
 
         <link rel="icon" href="/favicon.ico" sizes="any">
         <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+        {{-- Google's search results need a square icon sized in multiples of 48px. --}}
+        <link rel="icon" href="/favicon-48.png" type="image/png" sizes="48x48">
+        <link rel="icon" href="/favicon-192.png" type="image/png" sizes="192x192">
         <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 
         @fonts

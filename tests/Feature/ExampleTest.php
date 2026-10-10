@@ -42,5 +42,8 @@ test('the homepage tells search engines which logo to show', function () {
     expect($structuredData['@context'])->toBe('https://schema.org')
         ->and($organization['@type'])->toBe('Organization')
         ->and($organization['logo'])->toBe(asset('logo.png'))
-        ->and(file_exists(public_path('logo.png')))->toBeTrue();
+        ->and(file_exists(public_path('logo.png')))->toBeTrue()
+        ->and($html)->toContain('href="/favicon-192.png" type="image/png" sizes="192x192"')
+        ->and(getimagesize(public_path('favicon-192.png'))[0])->toBe(192)
+        ->and(getimagesize(public_path('favicon-48.png'))[0])->toBe(48);
 });
