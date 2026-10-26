@@ -1,0 +1,24 @@
+{
+    "name": "Shiftora Kiosk",
+    "short_name": "Kiosk",
+    "description": "Shared time clock where employees clock in and out with their PIN.",
+    "start_url": "/kiosk",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "any",
+    "background_color": "#1e2124",
+    "theme_color": "#1e2124",
+    "icons": [
+        {
+            "src": "/apple-touch-icon.png",
+            "sizes": "180x180",
+            "type": "image/png"
+        },
+        {
+            "src": "/logo.png",
+            "sizes": "316x316",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}

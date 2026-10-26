@@ -7,6 +7,7 @@ use App\Models\Concerns\Auditable;
 use App\Models\Concerns\BelongsToOrganization;
 use Database\Factories\EmployeeFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Attributes\Scope;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
@@ -31,6 +32,7 @@ use Illuminate\Support\Carbon;
  * @property Role $role
  * @property int|null $hourly_rate_cents
  * @property string|null $color
+ * @property string|null $clock_pin
  * @property bool $is_active
  * @property Carbon|null $invited_at
  * @property Carbon|null $created_at
@@ -38,7 +40,8 @@ use Illuminate\Support\Carbon;
  * @property-read User|null $user
  * @property-read Location|null $location
  */
-#[Fillable(['organization_id', 'user_id', 'location_id', 'first_name', 'last_name', 'email', 'phone', 'job_title', 'role', 'hourly_rate_cents', 'color', 'is_active', 'invited_at'])]
+#[Fillable(['organization_id', 'user_id', 'location_id', 'first_name', 'last_name', 'email', 'phone', 'job_title', 'role', 'hourly_rate_cents', 'color', 'clock_pin', 'is_active', 'invited_at'])]
+#[Hidden(['clock_pin'])]
 class Employee extends Model
 {
     /** @use HasFactory<EmployeeFactory> */
@@ -50,6 +53,28 @@ class Employee extends Model
      * @var list<string>
      */
     public const COLORS = ['#2F6B4F', '#3B6E8F', '#8A5A44', '#6B5B95', '#B8860B', '#4A7C59', '#A0522D', '#5F6B7A'];
+
+    protected static function booted(): void
+    {
+        static::creating(function (self $employee): void {
+            $employee->clock_pin ??= self::uniqueClockPin((int) $employee->organization_id);
+        });
+    }
+
+    /**
+     * A random kiosk PIN nobody else in the organization has: four digits, or six once four-digit PINs run short.
+     */
+    public static function uniqueClockPin(int $organizationId): string
+    {
+        $attempts = 0;
+
+        do {
+            $digits = ++$attempts > 50 ? 6 : 4;
+            $pin = str_pad((string) random_int(0, 10 ** $digits - 1), $digits, '0', STR_PAD_LEFT);
+        } while (static::withoutGlobalScopes()->where('organization_id', $organizationId)->where('clock_pin', $pin)->exists());
+
+        return $pin;
+    }
 
     /**
      * @return array<string, string>

@@ -1,5 +1,5 @@
 import { Form, Head } from '@inertiajs/react';
-import { Building2, ImageUp, Trash2 } from 'lucide-react';
+import { Building2, ImageUp, KeyRound, Trash2 } from 'lucide-react';
 import { useState } from 'react';
 import OrganizationController from '@/actions/App/Http/Controllers/Settings/OrganizationController';
 import Heading from '@/components/heading';
@@ -34,6 +34,7 @@ type Props = {
         geofencing: boolean;
     };
     payWeekFixed: boolean;
+    hasKioskPin: boolean;
 };
 
 const weekdays = [
@@ -56,6 +57,7 @@ export default function OrganizationSettings({
     settings,
     features,
     payWeekFixed,
+    hasKioskPin,
 }: Props) {
     const [timezone, setTimezone] = useState(settings.timezone);
     const [weekStartsOn, setWeekStartsOn] = useState(
@@ -334,7 +336,79 @@ export default function OrganizationSettings({
             </Form>
 
             <LogoSection logoUrl={settings.logo_url} name={settings.name} />
+
+            <KioskPinSection hasKioskPin={hasKioskPin} />
         </>
+    );
+}
+
+function KioskPinSection({ hasKioskPin }: { hasKioskPin: boolean }) {
+    return (
+        <div className="space-y-6">
+            <Heading
+                variant="small"
+                title="Kiosk PIN"
+                description={
+                    hasKioskPin
+                        ? 'Managers enter this organization PIN to take a shared device out of kiosk mode. Set a new one if it has been shared too widely.'
+                        : 'Managers enter this organization PIN to take a shared device out of kiosk mode. It is set the first time someone opens the kiosk, or you can set it here.'
+                }
+            />
+
+            <Form
+                {...OrganizationController.updateKioskPin.form()}
+                options={{ preserveScroll: true }}
+                resetOnSuccess
+                className="space-y-4"
+            >
+                {({ processing, errors }) => (
+                    <>
+                        <div className="grid gap-4 sm:grid-cols-2">
+                            <div className="grid gap-2">
+                                <Label htmlFor="exit_pin">
+                                    {hasKioskPin ? 'New PIN' : 'PIN'}
+                                </Label>
+                                <Input
+                                    id="exit_pin"
+                                    name="exit_pin"
+                                    type="password"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    maxLength={8}
+                                    placeholder="4 to 8 digits"
+                                />
+                                <InputError message={errors.exit_pin} />
+                            </div>
+                            <div className="grid gap-2">
+                                <Label htmlFor="exit_pin_confirmation">
+                                    Confirm PIN
+                                </Label>
+                                <Input
+                                    id="exit_pin_confirmation"
+                                    name="exit_pin_confirmation"
+                                    type="password"
+                                    inputMode="numeric"
+                                    autoComplete="off"
+                                    maxLength={8}
+                                />
+                            </div>
+                        </div>
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            disabled={processing}
+                        >
+                            {processing ? (
+                                <Spinner />
+                            ) : (
+                                <KeyRound aria-hidden="true" />
+                            )}
+                            {hasKioskPin ? 'Change PIN' : 'Set PIN'}
+                        </Button>
+                    </>
+                )}
+            </Form>
+        </div>
     );
 }
 

@@ -121,6 +121,7 @@ class HandleInertiaRequests extends Middleware
                 'manageEmployees' => $role->canManageEmployees(),
                 'manageSchedule' => $role->canManageSchedule(),
                 'approveTimesheets' => $role->canApproveTimesheets(),
+                'runKiosk' => $role->canRunKiosk(),
                 'viewReports' => $role->canViewReports(),
                 'viewAuditLog' => $role->canManageOrganization(),
                 'manageBilling' => $role->canManageBilling(),
@@ -150,7 +151,8 @@ class HandleInertiaRequests extends Middleware
                 default => 'inactive',
             },
             'trial_days_remaining' => $organization->trialDaysRemaining(),
-            'features' => array_map(fn (Feature $feature): string => $feature->value, $plan?->features() ?? []),
+            // A read-only workspace keeps showing what it had, so nothing seems to disappear.
+            'features' => array_map(fn (Feature $feature): string => $feature->value, $organization->visiblePlan()->features()),
         ];
     }
 }

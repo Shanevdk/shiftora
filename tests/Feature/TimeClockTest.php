@@ -6,6 +6,7 @@ use App\Models\Location;
 use App\Models\Organization;
 use App\Models\TimeEntry;
 use App\Models\Timesheet;
+use Inertia\Testing\AssertableInertia as Assert;
 
 test('an employee clocks in and the open entry is recorded', function () {
     $user = member(Role::Employee);
@@ -80,6 +81,29 @@ test('an employee cannot clock in to a week whose timesheet is approved', functi
     expect(TimeEntry::query()->count())->toBe(0);
 });
 
+test('today\'s entries report seconds worked so a punch under a minute does not read as zero', function () {
+    $user = member(Role::Employee);
+
+    $this->travelTo(now()->setTime(12, 0));
+    $this->actingAs($user)->post(route('time-clock.clock-in'));
+
+    $this->travelTo(now()->setTime(12, 0, 50));
+    $this->post(route('time-clock.clock-out'));
+
+    $this->get(route('time-clock.show'))
+        ->assertInertia(fn (Assert $page) => $page
+            ->where('todayEntries.0.worked_seconds', 50)
+            ->where('todayEntries.0.worked_minutes', 0));
+});
+
+test('pages carry the server time so live timers can correct a device clock that runs fast or slow', function () {
+    $this->freezeTime();
+
+    $this->actingAs(member(Role::Employee))
+        ->get(route('time-clock.show'))
+        ->assertSee('<meta name="server-time" content="'.now()->getTimestampMs().'">', false);
+});
+
 test('clocking out without an open entry is rejected', function () {
     $this->actingAs(member(Role::Employee))
         ->post(route('time-clock.clock-out'))
@@ -88,7 +112,7 @@ test('clocking out without an open entry is rejected', function () {
 
 describe('geofencing', function () {
     beforeEach(function () {
-        $this->organization = Organization::factory()->onPlan(Plan::Business)->create(['geofencing_enabled' => true]);
+        $this->organization = Organization::factory()->subscribed(Plan::Business)->create(['geofencing_enabled' => true]);
         $this->location = Location::factory()->for($this->organization)->geofenced(43.6532, -79.3832, 150)->create();
         $this->user = member(Role::Employee, $this->organization);
         $this->user->currentEmployee->update(['location_id' => $this->location->id]);

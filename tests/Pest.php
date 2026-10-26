@@ -1,10 +1,12 @@
 <?php
 
+use App\Enums\Plan;
 use App\Enums\Role;
 use App\Models\Employee;
 use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /*
@@ -60,4 +62,23 @@ function member(Role $role = Role::Owner, ?Organization $organization = null): U
         ->create();
 
     return $employee->user->refresh();
+}
+
+/**
+ * Move the organization from its free trial (which includes every feature) onto a paid subscription
+ * to the given plan, so only that plan's features apply.
+ */
+function subscribeTo(Organization $organization, Plan $plan): Organization
+{
+    $organization->forceFill(['plan' => $plan, 'stripe_id' => 'cus_'.Str::random(14), 'trial_ends_at' => null])->save();
+
+    $organization->subscriptions()->create([
+        'type' => config('shiftora.subscription_type'),
+        'stripe_id' => 'sub_'.Str::random(14),
+        'stripe_status' => 'active',
+        'stripe_price' => $plan->stripePrice() ?? 'price_'.$plan->value,
+        'quantity' => 1,
+    ]);
+
+    return $organization->refresh();
 }

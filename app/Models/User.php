@@ -23,6 +23,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property string $name
  * @property string $email
  * @property bool $is_demo
+ * @property bool $is_guest Started from the landing page without a login, until the workspace is saved.
  * @property bool $is_admin
  * @property int|null $current_organization_id
  * @property Carbon|null $email_verified_at
@@ -53,6 +54,7 @@ class User extends Authenticatable implements PasskeyUser
         return [
             'email_verified_at' => 'datetime',
             'is_demo' => 'boolean',
+            'is_guest' => 'boolean',
             'is_admin' => 'boolean',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',

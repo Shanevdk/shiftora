@@ -39,7 +39,7 @@ test('employees cannot view reports', function () {
 });
 
 test('starter organizations see an upgrade prompt instead of reports', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
 
     $this->actingAs($this->manager)
         ->get(route('reports.index'))

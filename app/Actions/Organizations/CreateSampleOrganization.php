@@ -30,6 +30,11 @@ use Illuminate\Support\Str;
 class CreateSampleOrganization
 {
     /**
+     * The PIN that takes a sample organization's devices out of kiosk mode.
+     */
+    public const KIOSK_EXIT_PIN = '1234';
+
+    /**
      * Create the sample organization and return its owner.
      *
      * A demo organization gets a unique slug and email domain, random passwords and is flagged
@@ -49,9 +54,10 @@ class CreateSampleOrganization
                 'timezone' => 'America/Toronto',
                 'plan' => Plan::Business,
                 'is_demo' => $isDemo,
+                'kiosk_exit_pin' => self::KIOSK_EXIT_PIN,
                 'daily_overtime_minutes' => 480,
                 'weekly_overtime_minutes' => 2400,
-                'trial_ends_at' => now()->addDays(config('shiftora.trial_days')),
+                'trial_ends_at' => Organization::newTrialEndsAt(),
             ]);
 
             $cafe = $organization->locations()->create([
@@ -133,6 +139,7 @@ class CreateSampleOrganization
                 'role' => $role,
                 'hourly_rate_cents' => $role === Role::Employee ? random_int(1750, 2300) : random_int(2600, 3600),
                 'color' => Employee::COLORS[$index % count(Employee::COLORS)],
+                'clock_pin' => Employee::uniqueClockPin($organization->id),
             ]);
         });
     }

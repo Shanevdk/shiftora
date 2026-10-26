@@ -42,6 +42,14 @@ enum Role: string
         return $this->isAtLeast(self::Manager);
     }
 
+    /**
+     * Turn a device into the shared PIN time clock that the whole team punches in on.
+     */
+    public function canRunKiosk(): bool
+    {
+        return $this->isAtLeast(self::Manager);
+    }
+
     public function canViewReports(): bool
     {
         return $this->isAtLeast(self::Manager);

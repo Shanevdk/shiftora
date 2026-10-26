@@ -4,7 +4,6 @@ import { destroy as leaveDemo } from '@/routes/demo';
 
 /**
  * Reminds visitors in the public demo that they are using sample data, with a way out to sign up.
- * The link targets the top window so it also escapes the landing page's embedded demo frame.
  */
 export function DemoBanner() {
     const { auth } = usePage().props;
@@ -21,7 +20,6 @@ export function DemoBanner() {
             </span>
             <a
                 href={leaveDemo().url}
-                target="_top"
                 className="inline-flex items-center gap-1 font-medium text-sidebar-primary underline-offset-4 hover:underline"
             >
                 Start your free trial

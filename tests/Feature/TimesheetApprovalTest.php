@@ -115,7 +115,7 @@ test('managers cannot approve their own timesheet', function () {
 });
 
 test('approvals are not available on the starter plan', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
 
     $this->actingAs($this->worker)
         ->post(route('timesheets.submit', $this->timesheet))
@@ -125,7 +125,7 @@ test('approvals are not available on the starter plan', function () {
 });
 
 test('overtime is only calculated on plans with overtime rules', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
 
     $this->actingAs($this->worker)
         ->get(route('timesheets.show', ['employee' => $this->employee, 'week' => '2026-10-05']))

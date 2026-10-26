@@ -7,54 +7,56 @@ import {
     ClipboardCheck,
     Clock,
     MapPin,
-    ShieldCheck,
+    Tablet,
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import LiveDemo from '@/components/live-demo';
 import SiteFooter from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
-import { formatCurrency, formatDate } from '@/lib/time';
+import { formatDate, formatPrice } from '@/lib/time';
 import { cn } from '@/lib/utils';
-import { dashboard, login, register } from '@/routes';
+import { dashboard, login } from '@/routes';
 import { destroy as leaveDemo } from '@/routes/demo';
+import { create as startWorkspace } from '@/routes/start';
 import type { Plan } from '@/types';
 
+// Draft copy, written plainly; rewrite it in your own voice before launch.
 const features = [
     {
         icon: Clock,
-        title: 'One-tap time clock',
+        title: 'Clock in from their phone',
         description:
-            'Clock in, take breaks and clock out from any phone. Totals update live, with no spreadsheets to chase.',
+            'Staff tap once to clock in and out. Nothing to install, and you see the hours add up as they work.',
+    },
+    {
+        icon: Tablet,
+        title: 'Or a tablet by the door',
+        description:
+            'No phone, no problem. Put a tablet on the wall and people punch in with their own PIN.',
     },
     {
         icon: CalendarDays,
-        title: 'Drag-and-drop scheduling',
+        title: 'Schedules people actually see',
         description:
-            'Build the week, move shifts between people in a second, and publish so everyone gets notified.',
+            'Drag shifts onto the week and publish. Everyone gets their shifts by email and in the app.',
     },
     {
         icon: ClipboardCheck,
-        title: 'Timesheet approvals',
+        title: 'Timesheets ready for payroll',
         description:
-            'Employees submit their week, managers approve it, and approved weeks lock for payroll.',
+            'Staff send in their week, you approve it, and it locks so the numbers stop changing.',
     },
     {
         icon: BarChart3,
-        title: 'Labor reports',
+        title: 'Hours and labor cost',
         description:
-            'Hours, overtime and labor cost by person and by day, exportable to CSV for payroll.',
+            'Hours, overtime and labor cost per person and per day. Export it to CSV for payroll.',
     },
     {
         icon: MapPin,
-        title: 'Geofenced clock-in',
+        title: 'Clock in only on site',
         description:
-            'Make sure people are on site when they clock in, with a radius you set for each location.',
-    },
-    {
-        icon: ShieldCheck,
-        title: 'Audit trail',
-        description:
-            'Every edit to time and schedules is recorded, so you know who changed what, and when.',
+            'Set a radius around each location so people can only clock in when they are actually there.',
     },
 ];
 
@@ -72,7 +74,7 @@ export default function Welcome({
     const { auth } = usePage().props;
     const isDemo = auth.user?.is_demo === true;
     const customer = isDemo ? null : auth.user;
-    const signUp = isDemo ? leaveDemo() : register();
+    const startFree = isDemo ? leaveDemo() : startWorkspace();
 
     return (
         <>
@@ -88,12 +90,6 @@ export default function Welcome({
                         </span>
                     </Link>
                     <nav className="flex items-center gap-2">
-                        <a
-                            href="#demo"
-                            className="hidden px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:inline"
-                        >
-                            Try it
-                        </a>
                         <a
                             href="#pricing"
                             className="hidden px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:inline"
@@ -112,7 +108,7 @@ export default function Welcome({
                                     </Button>
                                 )}
                                 <Button asChild>
-                                    <Link href={signUp}>Start free trial</Link>
+                                    <Link href={startFree}>Start free</Link>
                                 </Button>
                             </>
                         )}
@@ -125,31 +121,39 @@ export default function Welcome({
                             <p className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
                                 Work smarter. Shift better.
                             </p>
+                            {/* Draft copy: rewrite the promise in your own voice. */}
                             <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                                Time tracking and scheduling your whole team
-                                will actually use.
+                                Your team clocks in from their phone, and you
+                                get timesheets ready for payroll.
                             </h1>
                             <p className="max-w-xl text-lg text-muted-foreground">
-                                Shiftora replaces paper timecards, group-chat
-                                schedules and payroll spreadsheets with one
-                                calm, reliable workspace for managers and hourly
-                                teams.
+                                No app to install. They open a link, see their
+                                shifts and tap to clock in.
                             </p>
-                            <div className="flex flex-wrap items-center gap-3">
+                            {customer ? (
                                 <Button size="lg" asChild>
-                                    <Link
-                                        href={customer ? dashboard() : signUp}
-                                    >
-                                        {customer
-                                            ? 'Go to your workspace'
-                                            : `Start your ${trialDays}-day free trial`}
+                                    <Link href={dashboard()}>
+                                        Go to your workspace
                                         <ArrowRight />
                                     </Link>
                                 </Button>
-                                <p className="text-sm text-muted-foreground">
-                                    No credit card required.
-                                </p>
-                            </div>
+                            ) : (
+                                <div className="flex flex-wrap items-start gap-3">
+                                    <LiveDemo />
+                                    <Button
+                                        size="lg"
+                                        variant="outline"
+                                        className="h-14 px-6 text-base"
+                                        asChild
+                                    >
+                                        <Link href={startFree}>
+                                            {freeUntil
+                                                ? `Use it free till ${freeUntil.slice(0, 4)}`
+                                                : `Start your ${trialDays}-day free trial`}
+                                        </Link>
+                                    </Button>
+                                </div>
+                            )}
                         </div>
 
                         <ProductPreview />
@@ -159,12 +163,11 @@ export default function Welcome({
                         <div className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6">
                             <div className="max-w-2xl space-y-3">
                                 <h2 className="text-3xl font-semibold tracking-tight">
-                                    Everything between the first clock-in and
-                                    payroll
+                                    What it does
                                 </h2>
                                 <p className="text-muted-foreground">
-                                    Built for restaurants, retail, warehouses,
-                                    field crews and anyone who runs on shifts.
+                                    For cafés, restaurants, shops, warehouses
+                                    and crews who work in shifts.
                                 </p>
                             </div>
                             <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
@@ -197,11 +200,16 @@ export default function Welcome({
                     >
                         <div className="mx-auto max-w-2xl space-y-3 text-center">
                             <h2 className="text-3xl font-semibold tracking-tight">
-                                Simple per-employee pricing
+                                Pricing
                             </h2>
                             <p className="text-muted-foreground">
-                                Pay only for active employees. Every plan starts
-                                with a {trialDays}-day free trial.
+                                You pay for each active employee, every month
+                                {plans[0]
+                                    ? `, in ${plans[0].currency}`
+                                    : ''}.{' '}
+                                {freeUntil
+                                    ? 'No credit card needed to get started.'
+                                    : `Every plan starts with a ${trialDays}-day free trial.`}
                             </p>
                         </div>
                         {freeUntil && <FreePromotionBanner until={freeUntil} />}
@@ -212,27 +220,12 @@ export default function Welcome({
                                     plan={plan}
                                     featured={plan.value === 'professional'}
                                     ctaHref={
-                                        customer ? dashboard().url : signUp.url
+                                        customer
+                                            ? dashboard().url
+                                            : startFree.url
                                     }
                                 />
                             ))}
-                        </div>
-                    </section>
-
-                    <section id="demo" className="scroll-mt-8 border-t bg-card">
-                        <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-20 md:px-6">
-                            <div className="mx-auto max-w-2xl space-y-3 text-center">
-                                <h2 className="text-3xl font-semibold tracking-tight">
-                                    Take it for a spin
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    This is the real Shiftora, not a video.
-                                    Clock in, build next week's schedule and
-                                    approve timesheets with no account or login.
-                                    Hit full screen for the full experience.
-                                </p>
-                            </div>
-                            <LiveDemo />
                         </div>
                     </section>
 
@@ -240,11 +233,11 @@ export default function Welcome({
                         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-4 py-16 md:flex-row md:items-center md:px-6">
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-semibold tracking-tight text-warm-white">
-                                    Ready for a calmer week?
+                                    Try it with your own team
                                 </h2>
                                 <p className="text-sidebar-foreground/70">
-                                    Set up your team in minutes. Your first
-                                    schedule is on us.
+                                    Free to start. No credit card and nothing to
+                                    install.
                                 </p>
                             </div>
                             <Button
@@ -252,10 +245,8 @@ export default function Welcome({
                                 className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
                                 asChild
                             >
-                                <Link href={customer ? dashboard() : signUp}>
-                                    {customer
-                                        ? 'Open dashboard'
-                                        : 'Start free trial'}
+                                <Link href={customer ? dashboard() : startFree}>
+                                    {customer ? 'Open dashboard' : 'Start free'}
                                 </Link>
                             </Button>
                         </div>
@@ -306,20 +297,15 @@ function PlanCard({
                 featured && 'border-primary shadow-lg ring-1 ring-primary',
             )}
         >
-            {featured && (
-                <span className="absolute -top-3 left-6 rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                    Most popular
-                </span>
-            )}
             <div className="space-y-2">
                 <h3 className="text-lg font-semibold">{plan.name}</h3>
                 <p className="min-h-10 text-sm text-muted-foreground">
                     {plan.description}
                 </p>
             </div>
-            <div className="flex items-baseline gap-1.5">
+            <div className="flex flex-wrap items-baseline gap-x-1.5">
                 <span className="text-4xl font-semibold tracking-tight tabular">
-                    {formatCurrency(plan.price_per_employee_cents)}
+                    {formatPrice(plan.price_per_employee_cents, plan.currency)}
                 </span>
                 <span className="text-sm text-muted-foreground">
                     / employee / month
@@ -346,7 +332,7 @@ function PlanCard({
                 ))}
             </ul>
             <Button variant={featured ? 'default' : 'outline'} asChild>
-                <Link href={ctaHref}>Start free trial</Link>
+                <Link href={ctaHref}>Try it free</Link>
             </Button>
         </div>
     );

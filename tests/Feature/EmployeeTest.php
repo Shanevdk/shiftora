@@ -43,7 +43,7 @@ test('an admin adds an employee and an invitation is emailed', function () {
 });
 
 test('the starter plan is limited to ten active employees', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
     Employee::factory()->for($this->organization)->count(9)->create();
 
     $this->actingAs($this->admin)

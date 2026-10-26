@@ -21,7 +21,7 @@ class CreateEmployee
     public function handle(Organization $organization, array $data, bool $sendInvitation = true): Employee
     {
         if ($organization->hasReachedEmployeeLimit()) {
-            $plan = $organization->activePlan() ?? $organization->plan;
+            $plan = $organization->visiblePlan();
 
             throw ValidationException::withMessages([
                 'first_name' => __('The :plan plan includes up to :limit active employees. Upgrade your plan to add more.', [

@@ -47,7 +47,26 @@ class DashboardController extends Controller
             'team' => $employee->role->canManageSchedule()
                 ? Inertia::defer(fn (): array => $this->teamOverview($organization))
                 : null,
+            'setup' => $employee->role->canManageEmployees() ? $this->setupProgress($employee) : null,
         ]);
+    }
+
+    /**
+     * How far the team is set up, for the getting-started checklist that owners and admins see.
+     *
+     * @return array{team_count: int, invited_count: int, joined_count: int, has_published_shift: bool, has_team_clock_in: bool}
+     */
+    private function setupProgress(Employee $manager): array
+    {
+        $team = Employee::query()->active()->whereKeyNot($manager->id);
+
+        return [
+            'team_count' => (clone $team)->count(),
+            'invited_count' => (clone $team)->where(fn ($query) => $query->whereNotNull('invited_at')->orWhereNotNull('user_id'))->count(),
+            'joined_count' => (clone $team)->whereNotNull('user_id')->count(),
+            'has_published_shift' => Shift::query()->published()->exists(),
+            'has_team_clock_in' => TimeEntry::query()->where('employee_id', '!=', $manager->id)->exists(),
+        ];
     }
 
     /**

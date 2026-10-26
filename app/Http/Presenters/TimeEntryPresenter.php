@@ -8,7 +8,7 @@ use App\Models\TimeEntry;
 class TimeEntryPresenter
 {
     /**
-     * @return array{id: int, employee_id: int, location: array{id: int, name: string}|null, clock_in_at: string, clock_out_at: string|null, break_minutes: int, worked_minutes: int, source: string, notes: string|null, is_open: bool, on_break_since: string|null}
+     * @return array{id: int, employee_id: int, location: array{id: int, name: string}|null, clock_in_at: string, clock_out_at: string|null, break_minutes: int, worked_minutes: int, worked_seconds: int, source: string, notes: string|null, is_open: bool, on_break_since: string|null}
      */
     public static function present(TimeEntry $entry): array
     {
@@ -20,6 +20,7 @@ class TimeEntryPresenter
             'clock_out_at' => $entry->clock_out_at?->toIso8601String(),
             'break_minutes' => $entry->break_minutes,
             'worked_minutes' => $entry->workedMinutes(),
+            'worked_seconds' => $entry->workedSeconds(),
             'source' => $entry->source,
             'notes' => $entry->notes,
             'is_open' => $entry->isOpen(),

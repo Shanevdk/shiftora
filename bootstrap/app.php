@@ -5,6 +5,7 @@ use App\Http\Middleware\EnsureFeature;
 use App\Http\Middleware\EnsureNotDemo;
 use App\Http\Middleware\HandleAppearance;
 use App\Http\Middleware\HandleInertiaRequests;
+use App\Http\Middleware\RestrictToKiosk;
 use App\Http\Middleware\SetCurrentOrganization;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -29,6 +30,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(append: [
             HandleAppearance::class,
+            RestrictToKiosk::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);

@@ -1,5 +1,5 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { LogOut, Save, Settings } from 'lucide-react';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -10,6 +10,7 @@ import { UserInfo } from '@/components/user-info';
 import { useMobileNavigation } from '@/hooks/use-mobile-navigation';
 import { logout } from '@/routes';
 import { edit } from '@/routes/profile';
+import { create as saveWorkspace } from '@/routes/save-workspace';
 import type { User } from '@/types';
 
 type Props = {
@@ -28,21 +29,32 @@ export function UserMenuContent({ user }: Props) {
         <>
             <DropdownMenuLabel className="p-0 font-normal">
                 <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                    <UserInfo user={user} showEmail={true} />
+                    <UserInfo user={user} showEmail={!user.is_guest} />
                 </div>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
                 <DropdownMenuItem asChild>
-                    <Link
-                        className="block w-full cursor-pointer"
-                        href={edit()}
-                        prefetch
-                        onClick={cleanup}
-                    >
-                        <Settings className="mr-2" />
-                        Settings
-                    </Link>
+                    {user.is_guest ? (
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={saveWorkspace()}
+                            onClick={cleanup}
+                        >
+                            <Save className="mr-2" />
+                            Save my workspace
+                        </Link>
+                    ) : (
+                        <Link
+                            className="block w-full cursor-pointer"
+                            href={edit()}
+                            prefetch
+                            onClick={cleanup}
+                        >
+                            <Settings className="mr-2" />
+                            Settings
+                        </Link>
+                    )}
                 </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />

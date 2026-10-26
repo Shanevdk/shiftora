@@ -46,10 +46,10 @@ test('a signed-in customer is never switched into a demo', function () {
         ->and(Organization::query()->where('is_demo', true)->exists())->toBeFalse();
 });
 
-test('leaving the demo signs the visitor out and points them to sign up', function () {
+test('leaving the demo signs the visitor out and points them to a workspace of their own', function () {
     $this->postJson(route('demo.store'));
 
-    $this->get(route('demo.destroy'))->assertRedirect(route('register'));
+    $this->get(route('demo.destroy'))->assertRedirect(route('start.create'));
 
     $this->assertGuest();
 });
@@ -57,7 +57,7 @@ test('leaving the demo signs the visitor out and points them to sign up', functi
 test('leaving the demo never signs out a real customer', function () {
     $user = member();
 
-    $this->actingAs($user)->get(route('demo.destroy'))->assertRedirect(route('register'));
+    $this->actingAs($user)->get(route('demo.destroy'))->assertRedirect(route('start.create'));
 
     $this->assertAuthenticatedAs($user);
 });

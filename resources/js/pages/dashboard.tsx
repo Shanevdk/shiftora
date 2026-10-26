@@ -7,12 +7,15 @@ import {
     Clock,
     Coffee,
     Timer,
+    UserPlus,
     Users,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import EmptyState from '@/components/empty-state';
 import PageContainer from '@/components/page-container';
 import PageHeader from '@/components/page-header';
+import { SetupChecklist } from '@/components/setup-checklist';
+import type { SetupProgress } from '@/components/setup-checklist';
 import StatCard from '@/components/stat-card';
 import { Button } from '@/components/ui/button';
 import {
@@ -30,9 +33,11 @@ import {
     formatTime,
     formatTimeRange,
     minutesSince,
+    serverNow,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { create as addEmployee } from '@/routes/employees';
 import { index as schedule } from '@/routes/schedule';
 import { show as timeClock } from '@/routes/time-clock';
 import { index as timesheets } from '@/routes/timesheets';
@@ -59,6 +64,8 @@ type Props = {
     myWeek: WeekSummary;
     upcomingShifts: Shift[];
     team?: TeamOverview | null;
+    /** Getting-started progress, for people who can add employees. */
+    setup: SetupProgress | null;
 };
 
 function greeting(timeZone: string): string {
@@ -79,10 +86,13 @@ function greeting(timeZone: string): string {
 
 /** Re-render every 30 seconds so live durations stay current. */
 function useNow(): Date {
-    const [now, setNow] = useState(() => new Date());
+    const [now, setNow] = useState(() => new Date(serverNow()));
 
     useEffect(() => {
-        const interval = window.setInterval(() => setNow(new Date()), 30000);
+        const interval = window.setInterval(
+            () => setNow(new Date(serverNow())),
+            30000,
+        );
 
         return () => window.clearInterval(interval);
     }, []);
@@ -95,12 +105,23 @@ export default function Dashboard({
     myWeek,
     upcomingShifts,
     team,
+    setup,
 }: Props) {
     const { organization, timeZone, can, hasFeature } = useWorkspace();
     const { auth } = usePage().props;
     const now = useNow();
     const firstName = auth.user?.name.split(' ')[0];
     const schedulingEnabled = hasFeature('scheduling');
+    const managesTeam = can('manageSchedule');
+
+    const clockButton = (
+        <Button variant={managesTeam ? 'outline' : 'default'} asChild>
+            <Link href={timeClock()}>
+                <Clock />
+                {clock.is_clocked_in ? 'Open time clock' : 'Clock in'}
+            </Link>
+        </Button>
+    );
 
     return (
         <>
@@ -110,16 +131,39 @@ export default function Dashboard({
                     title={`${greeting(timeZone)}${firstName ? `, ${firstName}` : ''}`}
                     description={`Here's what's happening at ${organization?.name ?? 'your organization'} today.`}
                     actions={
-                        <Button asChild>
-                            <Link href={timeClock()}>
-                                <Clock />
-                                {clock.is_clocked_in
-                                    ? 'Open time clock'
-                                    : 'Clock in'}
-                            </Link>
-                        </Button>
+                        <>
+                            {clockButton}
+                            {can('manageEmployees') ? (
+                                <Button asChild>
+                                    <Link href={addEmployee()}>
+                                        <UserPlus />
+                                        Add employee
+                                    </Link>
+                                </Button>
+                            ) : (
+                                managesTeam &&
+                                schedulingEnabled && (
+                                    <Button asChild>
+                                        <Link href={schedule()}>
+                                            <CalendarDays />
+                                            Open schedule
+                                        </Link>
+                                    </Button>
+                                )
+                            )}
+                        </>
                     }
                 />
+
+                {setup && <SetupChecklist progress={setup} />}
+
+                {managesTeam && (
+                    <TeamSection team={team} now={now} timeZone={timeZone} />
+                )}
+
+                {managesTeam && (
+                    <h2 className="-mb-2 text-lg font-semibold">Your time</h2>
+                )}
 
                 <div
                     className={cn(
@@ -163,10 +207,6 @@ export default function Dashboard({
                         />
                     )}
                 </div>
-
-                {can('manageSchedule') && (
-                    <TeamSection team={team} now={now} timeZone={timeZone} />
-                )}
 
                 {schedulingEnabled && (
                     <Card>

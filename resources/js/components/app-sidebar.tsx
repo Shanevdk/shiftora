@@ -9,9 +9,11 @@ import {
     History,
     LayoutGrid,
     ShieldCheck,
+    Tablet,
     Users,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
+import { ContinueCard } from '@/components/continue-card';
 import { NavFooter } from '@/components/nav-footer';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -30,6 +32,7 @@ import { dashboard } from '@/routes';
 import { dashboard as adminDashboard } from '@/routes/admin';
 import { index as auditLog } from '@/routes/audit-log';
 import { index as employees } from '@/routes/employees';
+import { show as kiosk } from '@/routes/kiosk';
 import { cookies, privacy } from '@/routes/legal';
 import { index as reports } from '@/routes/reports';
 import { index as schedule } from '@/routes/schedule';
@@ -59,6 +62,9 @@ export function AppSidebar() {
                   href: timesheets(),
                   icon: ClipboardCheck,
               },
+              ...(can('runKiosk')
+                  ? [{ title: 'Kiosk', href: kiosk(), icon: Tablet }]
+                  : []),
           ]
         : [];
 
@@ -114,6 +120,7 @@ export function AppSidebar() {
             </SidebarContent>
 
             <SidebarFooter>
+                <ContinueCard />
                 <OrganizationSwitcher />
                 <NavUser />
             </SidebarFooter>

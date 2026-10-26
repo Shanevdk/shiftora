@@ -45,6 +45,9 @@ class TimeEntry extends Model
 
     public const SOURCE_MANUAL = 'manual';
 
+    /** Punched in with a PIN on a shared kiosk device at the workplace. */
+    public const SOURCE_KIOSK = 'kiosk';
+
     /**
      * @return array<string, string>
      */
@@ -100,17 +103,25 @@ class TimeEntry extends Model
     }
 
     /**
-     * Minutes worked, excluding breaks. Open entries are measured up to the given moment.
+     * Whole minutes worked, excluding breaks. Open entries are measured up to the given moment.
      */
     public function workedMinutes(?CarbonInterface $until = null): int
     {
+        return intdiv($this->workedSeconds($until), 60);
+    }
+
+    /**
+     * Seconds worked, excluding breaks. Open entries are measured up to the given moment.
+     */
+    public function workedSeconds(?CarbonInterface $until = null): int
+    {
         $end = $this->clock_out_at ?? $until ?? now();
-        $breakMinutes = $this->break_minutes;
+        $breakSeconds = $this->break_minutes * 60;
 
         if ($this->clock_out_at === null && $this->openBreak !== null) {
-            $breakMinutes += (int) $this->openBreak->started_at->diffInMinutes($end);
+            $breakSeconds += (int) $this->openBreak->started_at->diffInSeconds($end);
         }
 
-        return max(0, (int) $this->clock_in_at->diffInMinutes($end) - $breakMinutes);
+        return max(0, (int) $this->clock_in_at->diffInSeconds($end) - $breakSeconds);
     }
 }

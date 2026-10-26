@@ -5,6 +5,8 @@ export type User = {
     avatar?: string;
     email_verified_at: string | null;
     is_demo: boolean;
+    /** Started a workspace from the landing page and has not saved it with a login yet. */
+    is_guest: boolean;
     is_admin: boolean;
     two_factor_enabled?: boolean;
     created_at: string;

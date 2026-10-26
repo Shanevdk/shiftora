@@ -21,6 +21,12 @@ class EmployeeInvitationController extends Controller
             throw ValidationException::withMessages(['email' => __('This employee cannot be invited.')]);
         }
 
+        if ($this->organization()->is_guest) {
+            $this->toast(__('Save your workspace first. Invites go out as soon as you do.'), 'info');
+
+            return to_route('save-workspace.create');
+        }
+
         if (! $inviteEmployee->handle($employee)) {
             $this->toast(__('The invitation email to :email could not be sent. Please try again later.', ['email' => $employee->email]), 'error');
 

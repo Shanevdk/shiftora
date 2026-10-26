@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Actions\Billing\StartCheckout;
 use App\Enums\Plan;
+use App\Http\Controllers\Concerns\TalksToStripe;
 use App\Http\Controllers\Controller;
 use App\Models\Organization;
+use App\Support\Billing\PlanAdvisor;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
-use Stripe\Exception\ApiErrorException;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 class BillingController extends Controller
 {
+    use TalksToStripe;
+
     /**
      * Show plans and subscription status. Every member can see it; only the owner can change it.
      */
@@ -24,7 +27,7 @@ class BillingController extends Controller
     {
         $organization = $this->organization();
         $subscription = $organization->subscription(config('shiftora.subscription_type'));
-        $activePlan = $organization->activePlan();
+        $isSubscribed = $organization->isSubscribed();
 
         if ($request->query('checkout') === 'success') {
             $this->toast(__('Thanks! Your subscription is being activated.'));
@@ -36,14 +39,14 @@ class BillingController extends Controller
                 'available' => $plan->stripePrice() !== null,
             ], Plan::cases()),
             'billing' => [
-                'plan' => $activePlan?->value,
-                'trial_plan' => $organization->plan->value,
+                'plan' => $isSubscribed ? $organization->activePlan()?->value : null,
+                'recommended_plan' => $isSubscribed ? null : PlanAdvisor::recommend($organization)->value,
                 'status' => match (true) {
                     $subscription?->onGracePeriod() => 'canceled',
                     $subscription?->pastDue() => 'past_due',
                     $subscription?->onTrial() && Organization::onFreePromotion() => 'free',
-                    $organization->isSubscribed() => 'active',
-                    $activePlan !== null => 'trial',
+                    $isSubscribed => 'active',
+                    $organization->hasActiveAccess() => 'trial',
                     default => 'inactive',
                 },
                 'trial_ends_at' => $organization->trial_ends_at?->toIso8601String(),
@@ -63,43 +66,17 @@ class BillingController extends Controller
     /**
      * Start Stripe Checkout for a new subscription, carrying over any remaining trial days.
      */
-    public function checkout(Request $request): SymfonyResponse
+    public function checkout(Request $request, StartCheckout $startCheckout): SymfonyResponse
     {
         $organization = $this->organization();
 
         Gate::authorize('manageBilling', $organization);
 
-        $plan = $this->validatedPlan($request);
+        $plan = Plan::from($request->validate(['plan' => ['required', Rule::enum(Plan::class)]])['plan']);
 
-        if ($organization->isSubscribed()) {
-            throw ValidationException::withMessages(['plan' => __('You already have a subscription. Change plans instead.')]);
-        }
-
-        $this->ensureSeatsFit($plan);
-
-        return $this->stripe(function () use ($organization, $plan): SymfonyResponse {
-            $builder = $organization
-                ->newSubscription(config('shiftora.subscription_type'), $plan->stripePrice())
-                ->quantity(max(1, $organization->activeEmployeeCount()));
-
-            $trialEndsAt = match (true) {
-                Organization::onFreePromotion() => Organization::freeUntil(),
-                $organization->onGenericTrial() => $organization->trial_ends_at,
-                default => null,
-            };
-
-            // Stripe Checkout only accepts a trial end at least 48 hours away.
-            if ($trialEndsAt?->isAfter(now()->addDays(2))) {
-                $builder->trialUntil($trialEndsAt);
-            }
-
-            $checkout = $builder->checkout([
-                'success_url' => route('billing.edit', ['checkout' => 'success']),
-                'cancel_url' => route('billing.edit'),
-            ]);
-
-            return Inertia::location($checkout->asStripeCheckoutSession()->url);
-        });
+        return $this->stripe(fn (): SymfonyResponse => Inertia::location(
+            $startCheckout->handle($organization, $plan, route('billing.edit')),
+        ));
     }
 
     /**
@@ -118,7 +95,7 @@ class BillingController extends Controller
             throw ValidationException::withMessages(['plan' => __('Start a subscription first.')]);
         }
 
-        $this->ensureSeatsFit($plan);
+        PlanAdvisor::ensureSeatsFit($organization, $plan);
 
         return $this->stripe(function () use ($organization, $subscription, $plan): SymfonyResponse {
             $subscription->swap($plan->stripePrice());
@@ -159,39 +136,5 @@ class BillingController extends Controller
         }
 
         return $plan;
-    }
-
-    private function ensureSeatsFit(Plan $plan): void
-    {
-        $limit = $plan->employeeLimit();
-        $activeEmployees = $this->organization()->activeEmployeeCount();
-
-        if ($limit !== null && $activeEmployees > $limit) {
-            throw ValidationException::withMessages([
-                'plan' => __('The :plan plan allows :limit active employees and you have :count. Deactivate employees first.', [
-                    'plan' => $plan->label(),
-                    'limit' => $limit,
-                    'count' => $activeEmployees,
-                ]),
-            ]);
-        }
-    }
-
-    /**
-     * Run a Stripe call, turning API failures into a friendly message instead of an error page.
-     *
-     * @param  callable(): SymfonyResponse  $callback
-     */
-    private function stripe(callable $callback): SymfonyResponse
-    {
-        try {
-            return $callback();
-        } catch (ApiErrorException $exception) {
-            Log::warning('Stripe billing request failed.', ['organization_id' => $this->organization()->id, 'message' => $exception->getMessage()]);
-
-            $this->toast(__('We could not reach our payment provider. Please try again in a moment.'), 'error');
-
-            return to_route('billing.edit');
-        }
     }
 }
