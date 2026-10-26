@@ -21,7 +21,9 @@ import {
     formatMinutes,
     formatTime,
     formatTimeRange,
+    formatWorkedSeconds,
     localDate,
+    serverNow,
     today,
 } from '@/lib/time';
 import { cn } from '@/lib/utils';
@@ -42,6 +44,8 @@ type GeofenceLocation = {
 
 type TimeClockProps = {
     clock: ClockState;
+    /** The number this person types on the shared kiosk keypad. */
+    clockPin: string | null;
     todayEntries: TimeEntry[];
     todayShift: Shift | null;
     geofence: {
@@ -101,6 +105,7 @@ function requestPosition(): Promise<Coordinates> {
 
 export default function TimeClock({
     clock,
+    clockPin,
     todayEntries,
     todayShift,
     geofence,
@@ -108,7 +113,7 @@ export default function TimeClock({
     const { timeZone, hasFeature } = useWorkspace();
     const schedulingEnabled = hasFeature('scheduling');
     const { errors } = usePage().props;
-    const [now, setNow] = useState(() => Date.now());
+    const [now, setNow] = useState(() => serverNow());
     const [pendingAction, setPendingAction] = useState<PendingAction>(null);
     const [locationError, setLocationError] = useState<string | null>(null);
 
@@ -117,7 +122,7 @@ export default function TimeClock({
             return;
         }
 
-        const interval = window.setInterval(() => setNow(Date.now()), 1000);
+        const interval = window.setInterval(() => setNow(serverNow()), 1000);
 
         return () => window.clearInterval(interval);
     }, [clock.is_clocked_in]);
@@ -133,10 +138,10 @@ export default function TimeClock({
               breakSeconds
             : 0;
 
-    const closedMinutes = todayEntries
+    const closedSeconds = todayEntries
         .filter((entry) => !entry.is_open)
-        .reduce((total, entry) => total + entry.worked_minutes, 0);
-    const todayTotalMinutes = closedMinutes + Math.floor(workedSeconds / 60);
+        .reduce((total, entry) => total + entry.worked_seconds, 0);
+    const todayTotalSeconds = closedSeconds + workedSeconds;
 
     const needsLocation = geofence.required && geofence.locations.length > 0;
     const isBusy = pendingAction !== null;
@@ -212,6 +217,16 @@ export default function TimeClock({
                         month: 'long',
                         day: 'numeric',
                     })}
+                    actions={
+                        clockPin && (
+                            <p className="rounded-lg border bg-card px-3 py-1.5 text-sm text-muted-foreground">
+                                Kiosk PIN{' '}
+                                <span className="font-mono font-semibold tracking-widest text-foreground tabular">
+                                    {clockPin}
+                                </span>
+                            </p>
+                        )
+                    }
                 />
 
                 {problem && (
@@ -274,10 +289,10 @@ export default function TimeClock({
                         </p>
                         <p className="text-sm text-muted-foreground">
                             {clock.is_on_break && clock.break_started_at
-                                ? `Break started at ${formatTime(clock.break_started_at, timeZone)} · ${formatMinutes(workedSeconds / 60)} worked so far`
+                                ? `Break started at ${formatTime(clock.break_started_at, timeZone)} · ${formatWorkedSeconds(workedSeconds)} worked so far`
                                 : clock.is_clocked_in && clock.clock_in_at
                                   ? `Clocked in at ${formatTime(clock.clock_in_at, timeZone)}${clock.location ? ` · ${clock.location.name}` : ''}`
-                                  : `${formatMinutes(todayTotalMinutes)} worked today`}
+                                  : `${formatWorkedSeconds(todayTotalSeconds)} worked today`}
                         </p>
                     </div>
 
@@ -378,7 +393,7 @@ export default function TimeClock({
                                 Today's entries
                             </h2>
                             <span className="text-sm font-semibold tabular">
-                                {formatMinutes(todayTotalMinutes)}
+                                {formatWorkedSeconds(todayTotalSeconds)}
                             </span>
                         </div>
                         {todayEntries.length === 0 ? (
@@ -415,6 +430,9 @@ export default function TimeClock({
                                                     entry.source === 'manual'
                                                         ? 'Added manually'
                                                         : null,
+                                                    entry.source === 'kiosk'
+                                                        ? 'Kiosk'
+                                                        : null,
                                                 ]
                                                     .filter(Boolean)
                                                     .join(' · ') ||
@@ -423,10 +441,10 @@ export default function TimeClock({
                                         </div>
                                         <div className="shrink-0 text-right">
                                             <p className="font-medium tabular">
-                                                {formatMinutes(
+                                                {formatWorkedSeconds(
                                                     entry.is_open
-                                                        ? workedSeconds / 60
-                                                        : entry.worked_minutes,
+                                                        ? workedSeconds
+                                                        : entry.worked_seconds,
                                                 )}
                                             </p>
                                             {entry.is_open && (

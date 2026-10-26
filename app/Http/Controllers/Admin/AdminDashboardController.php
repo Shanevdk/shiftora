@@ -68,7 +68,7 @@ class AdminDashboardController extends Controller
      */
     private function users(): Builder
     {
-        return User::query()->where('is_demo', false);
+        return User::query()->where('is_demo', false)->where('is_guest', false);
     }
 
     /**
@@ -76,7 +76,7 @@ class AdminDashboardController extends Controller
      */
     private function organizations(): Builder
     {
-        return Organization::query()->where('is_demo', false);
+        return Organization::query()->where('is_demo', false)->where('is_guest', false);
     }
 
     /**

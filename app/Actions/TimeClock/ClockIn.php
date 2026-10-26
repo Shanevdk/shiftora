@@ -20,14 +20,18 @@ class ClockIn
      * clock-ins and timesheet approvals are serialized; a partial unique index backs this
      * up at the database level.
      *
+     * Kiosk punches skip the geofence: the shared device already sits at the workplace.
+     *
      * @throws ValidationException
      */
-    public function handle(Employee $employee, ?float $latitude = null, ?float $longitude = null): TimeEntry
+    public function handle(Employee $employee, ?float $latitude = null, ?float $longitude = null, string $source = TimeEntry::SOURCE_CLOCK): TimeEntry
     {
-        $location = $this->resolveLocation($employee, $latitude, $longitude);
+        $location = $source === TimeEntry::SOURCE_KIOSK
+            ? $employee->location
+            : $this->resolveLocation($employee, $latitude, $longitude);
 
         try {
-            return DB::transaction(function () use ($employee, $location, $latitude, $longitude): TimeEntry {
+            return DB::transaction(function () use ($employee, $location, $latitude, $longitude, $source): TimeEntry {
                 Employee::query()->whereKey($employee->id)->lockForUpdate()->first();
 
                 if ($employee->timeEntries()->whereNull('clock_out_at')->exists()) {
@@ -44,7 +48,7 @@ class ClockIn
                     'clock_in_at' => now(),
                     'clock_in_latitude' => $latitude,
                     'clock_in_longitude' => $longitude,
-                    'source' => TimeEntry::SOURCE_CLOCK,
+                    'source' => $source,
                 ]);
             });
         } catch (UniqueConstraintViolationException) {

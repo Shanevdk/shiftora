@@ -1,8 +1,10 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, Link } from '@inertiajs/react';
 import {
     AlertTriangle,
+    ArrowRight,
     Check,
     CreditCard,
+    Eye,
     ExternalLink,
     Gift,
     Lock,
@@ -25,9 +27,10 @@ import {
 } from '@/components/ui/dialog';
 import { Spinner } from '@/components/ui/spinner';
 import { useWorkspace } from '@/hooks/use-workspace';
-import { formatCurrency, formatDateTimeDay } from '@/lib/time';
+import { formatDateTimeDay, formatPrice } from '@/lib/time';
 import { cn } from '@/lib/utils';
 import { checkout, edit, portal, swap } from '@/routes/billing';
+import { show as continueWithShiftora } from '@/routes/continue';
 import type { Plan, PlanKey } from '@/types';
 
 type BillingStatus =
@@ -41,8 +44,10 @@ type BillingStatus =
 type BillingPlan = Plan & { available: boolean };
 
 type Billing = {
+    /** The subscribed plan, or null on the free trial (which includes everything). */
     plan: PlanKey | null;
-    trial_plan: PlanKey;
+    /** The plan that fits how the organization has used Shiftora, until it subscribes. */
+    recommended_plan: PlanKey | null;
     status: BillingStatus;
     trial_ends_at: string | null;
     trial_days_remaining: number | null;
@@ -87,8 +92,12 @@ export default function BillingSettings({
     const isSubscribed = ['active', 'free', 'canceled', 'past_due'].includes(
         billing.status,
     );
-    const currentPlanKey = billing.plan ?? billing.trial_plan;
-    const currentPlan = plans.find((plan) => plan.value === currentPlanKey);
+    const currentPlan = plans.find((plan) => plan.value === billing.plan);
+    // Before subscribing, estimate with the plan that fits the team.
+    const estimatePlan =
+        currentPlan ??
+        plans.find((plan) => plan.value === billing.recommended_plan);
+    const seats = Math.max(1, billing.active_employee_count);
     const freeUntil = billing.free_until;
     const isFreeNow = freeUntil !== null && billing.status !== 'inactive';
 
@@ -99,16 +108,16 @@ export default function BillingSettings({
             <h1 className="sr-only">Billing</h1>
 
             {billing.status === 'inactive' && (
-                <Alert className="border-destructive/30 bg-destructive/10 text-destructive">
-                    <Lock aria-hidden="true" />
-                    <AlertTitle>Your workspace is locked</AlertTitle>
-                    <AlertDescription className="text-destructive/90">
+                <Alert className="border-warning/40 bg-warning/10">
+                    <Eye aria-hidden="true" className="text-warning" />
+                    <AlertTitle>Your workspace is read-only</AlertTitle>
+                    <AlertDescription>
                         {billing.ends_at
                             ? 'Your subscription has ended.'
                             : 'Your free trial has ended.'}{' '}
                         {canManage
-                            ? 'Choose a plan below to unlock the time clock, schedules and timesheets for your team. Nothing has been deleted.'
-                            : 'Ask your account owner to choose a plan to unlock the workspace. Nothing has been deleted.'}
+                            ? 'Everything you set up is still here. Continue with a plan below to keep your data going.'
+                            : 'Everything is still here. Ask your account owner to continue with a plan to keep it going.'}
                     </AlertDescription>
                 </Alert>
             )}
@@ -145,7 +154,10 @@ export default function BillingSettings({
                                 <p className="text-xl font-semibold tracking-tight">
                                     {billing.status === 'inactive'
                                         ? 'No active plan'
-                                        : (currentPlan?.name ?? 'Unknown plan')}
+                                        : billing.status === 'trial'
+                                          ? 'Everything included'
+                                          : (currentPlan?.name ??
+                                            'Unknown plan')}
                                 </p>
                                 <StatusBadge billing={billing} />
                             </div>
@@ -169,6 +181,15 @@ export default function BillingSettings({
                                 ) : (
                                     'Manage billing'
                                 )}
+                            </Button>
+                        )}
+
+                        {canManage && !isSubscribed && (
+                            <Button asChild>
+                                <Link href={continueWithShiftora()}>
+                                    Continue with Shiftora
+                                    <ArrowRight aria-hidden="true" />
+                                </Link>
                             </Button>
                         )}
                     </div>
@@ -196,22 +217,22 @@ export default function BillingSettings({
                                 Monthly estimate
                             </dt>
                             <dd className="text-lg font-semibold tabular">
-                                {isFreeNow
-                                    ? formatCurrency(0)
-                                    : currentPlan &&
-                                        billing.status !== 'inactive'
-                                      ? formatCurrency(
-                                            currentPlan.price_per_employee_cents *
-                                                billing.active_employee_count,
-                                        )
-                                      : '—'}
+                                {!estimatePlan
+                                    ? '—'
+                                    : isFreeNow
+                                      ? formatPrice(0, estimatePlan.currency)
+                                      : formatPrice(
+                                            estimatePlan.price_per_employee_cents *
+                                                seats,
+                                            estimatePlan.currency,
+                                        )}
                             </dd>
                             <dd className="text-xs text-muted-foreground">
-                                {isFreeNow && freeUntil && currentPlan
-                                    ? `Then ${formatCurrency(currentPlan.price_per_employee_cents * billing.active_employee_count)} a month from ${formatFreeUntil(freeUntil)}`
-                                    : currentPlan
-                                      ? `${formatCurrency(currentPlan.price_per_employee_cents)} × ${billing.active_employee_count} active ${billing.active_employee_count === 1 ? 'employee' : 'employees'}`
-                                      : 'Choose a plan to see an estimate'}
+                                {!estimatePlan
+                                    ? 'Choose a plan to see an estimate'
+                                    : isFreeNow && freeUntil
+                                      ? `Then ${formatPrice(estimatePlan.price_per_employee_cents * seats, estimatePlan.currency)} a month on ${estimatePlan.name} from ${formatFreeUntil(freeUntil)}`
+                                      : `${estimatePlan.name}: ${formatPrice(estimatePlan.price_per_employee_cents, estimatePlan.currency)} × ${seats} ${seats === 1 ? 'employee' : 'employees'}`}
                             </dd>
                         </div>
                         <div className="space-y-1 p-4 sm:p-6">
@@ -277,13 +298,10 @@ export default function BillingSettings({
                                 plan={plan}
                                 freeUntil={freeUntil}
                                 isCurrent={
-                                    billing.status !== 'inactive' &&
-                                    plan.value === currentPlanKey
+                                    isSubscribed && plan.value === billing.plan
                                 }
-                                currentLabel={
-                                    billing.status === 'trial'
-                                        ? 'Your trial'
-                                        : 'Current plan'
+                                isRecommended={
+                                    plan.value === billing.recommended_plan
                                 }
                                 action={
                                     canManage ? (
@@ -350,9 +368,9 @@ function StatusBadge({ billing }: { billing: Billing }) {
             );
         default:
             return (
-                <Badge className="border-transparent bg-destructive/10 text-destructive">
+                <Badge className="border-transparent bg-warning/15 text-warning">
                     <Lock aria-hidden="true" />
-                    Inactive
+                    Read-only
                 </Badge>
             );
     }
@@ -375,8 +393,8 @@ function StatusDetail({
                 : `${days} ${days === 1 ? 'day' : 'days'} left in your trial`;
 
         const nextStep = billing.free_until
-            ? `Choose a plan and add your card to keep going. You won't be charged until ${formatFreeUntil(billing.free_until)}.`
-            : 'Choose a plan to keep going without interruption.';
+            ? `Continue with a plan before then and nothing changes for your team. You won't be charged until ${formatFreeUntil(billing.free_until)}.`
+            : 'Continue with a plan before then and nothing changes for your team.';
 
         detail = billing.trial_ends_at
             ? `${remaining} (ends ${formatDateTimeDay(billing.trial_ends_at, timeZone, longDate)}). ${nextStep}`
@@ -395,7 +413,7 @@ function StatusDetail({
     } else if (billing.status === 'active') {
         detail = 'Your subscription renews automatically each month.';
     } else {
-        detail = 'Choose a plan to unlock your workspace.';
+        detail = 'Continue with a plan to keep your data going.';
     }
 
     return <p className="text-sm text-muted-foreground">{detail}</p>;
@@ -425,33 +443,32 @@ function PlanCard({
     plan,
     freeUntil,
     isCurrent,
-    currentLabel,
+    isRecommended,
     action,
 }: {
     plan: BillingPlan;
     freeUntil: string | null;
     isCurrent: boolean;
-    currentLabel: string;
+    isRecommended: boolean;
     action: ReactNode;
 }) {
-    const isFeatured = plan.value === 'professional';
-
     return (
         <div
             className={cn(
                 'relative flex flex-col gap-5 rounded-xl border bg-card p-5',
-                isCurrent && 'border-primary ring-1 ring-primary',
+                (isCurrent || isRecommended) &&
+                    'border-primary ring-1 ring-primary',
             )}
         >
             <div className="absolute -top-3 left-5 flex gap-2">
                 {isCurrent && (
                     <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
-                        {currentLabel}
+                        Current plan
                     </span>
                 )}
-                {isFeatured && !isCurrent && (
-                    <span className="rounded-full border bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-                        Most popular
+                {isRecommended && (
+                    <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground">
+                        Fits your team
                     </span>
                 )}
             </div>
@@ -469,8 +486,12 @@ function PlanCard({
                         Free
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        Then {formatCurrency(plan.price_per_employee_cents)} /
-                        employee / month from{' '}
+                        Then{' '}
+                        {formatPrice(
+                            plan.price_per_employee_cents,
+                            plan.currency,
+                        )}{' '}
+                        / employee / month from{' '}
                         {formatFreeUntil(freeUntil, {
                             month: 'short',
                             year: 'numeric',
@@ -480,7 +501,10 @@ function PlanCard({
             ) : (
                 <div className="flex flex-wrap items-baseline gap-x-1.5">
                     <span className="text-3xl font-semibold tracking-tight tabular">
-                        {formatCurrency(plan.price_per_employee_cents)}
+                        {formatPrice(
+                            plan.price_per_employee_cents,
+                            plan.currency,
+                        )}
                     </span>
                     <span className="text-sm text-muted-foreground">
                         / employee / month
@@ -531,7 +555,8 @@ function PlanAction({
         plan.employee_limit !== null &&
         billing.active_employee_count > plan.employee_limit;
     const unavailable = !billingConfigured || !plan.available;
-    const variant = plan.value === 'professional' ? 'default' : 'outline';
+    const variant =
+        plan.value === billing.recommended_plan ? 'default' : 'outline';
 
     if (isCurrentSubscription) {
         return (
@@ -574,7 +599,7 @@ function PlanAction({
                                 }
                             >
                                 {processing && <Spinner />}
-                                Choose {plan.name}
+                                Continue with {plan.name}
                             </Button>
                             <InputError message={errors.plan} />
                         </div>
@@ -612,9 +637,9 @@ function SwapPlanButton({
                 <DialogTitle>Switch to {plan.name}?</DialogTitle>
                 <DialogDescription>
                     Your subscription moves to {plan.name} at{' '}
-                    {formatCurrency(plan.price_per_employee_cents)} per active
-                    employee per month. The change is prorated on your next
-                    invoice.
+                    {formatPrice(plan.price_per_employee_cents, plan.currency)}{' '}
+                    per active employee per month. The change is prorated on
+                    your next invoice.
                 </DialogDescription>
 
                 <Form

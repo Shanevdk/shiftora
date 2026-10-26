@@ -26,6 +26,14 @@ enum Plan: string
         return null;
     }
 
+    /**
+     * The ISO currency code plans are priced and billed in, e.g. "CAD".
+     */
+    public static function currency(): string
+    {
+        return strtoupper((string) config('cashier.currency'));
+    }
+
     public function label(): string
     {
         return $this->config('name');
@@ -41,9 +49,12 @@ enum Plan: string
         return $this->config('price_per_employee_cents');
     }
 
+    /**
+     * The Stripe price the plan is billed with, or null when it isn't set up (an empty env value counts as not set).
+     */
     public function stripePrice(): ?string
     {
-        return $this->config('stripe_price');
+        return $this->config('stripe_price') ?: null;
     }
 
     /**
@@ -79,7 +90,7 @@ enum Plan: string
     }
 
     /**
-     * @return array{value: string, name: string, description: string, price_per_employee_cents: int, employee_limit: int|null, location_limit: int|null, features: list<array{value: string, label: string}>}
+     * @return array{value: string, name: string, description: string, price_per_employee_cents: int, currency: string, employee_limit: int|null, location_limit: int|null, features: list<array{value: string, label: string}>}
      */
     public function toArray(): array
     {
@@ -88,6 +99,7 @@ enum Plan: string
             'name' => $this->label(),
             'description' => $this->description(),
             'price_per_employee_cents' => $this->pricePerEmployeeCents(),
+            'currency' => self::currency(),
             'employee_limit' => $this->employeeLimit(),
             'location_limit' => $this->locationLimit(),
             'features' => array_map(

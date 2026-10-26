@@ -20,17 +20,19 @@ class WelcomeController extends Controller
     public function __invoke(): Response
     {
         $trialDays = config('shiftora.trial_days');
+        $freeUntil = Organization::onFreePromotion() ? Organization::freeUntil() : null;
 
         return Inertia::render('welcome', [
             'pageTitle' => self::PAGE_TITLE,
             'plans' => array_map(fn (Plan $plan): array => $plan->toArray(), Plan::cases()),
             'trialDays' => $trialDays,
-            'freeUntil' => Organization::onFreePromotion() ? Organization::freeUntil()->toDateString() : null,
+            'freeUntil' => $freeUntil?->toDateString(),
         ])->withViewData([
             // Rendered into the HTML itself, so search engines and link previews see them without running JavaScript.
             'metaTitle' => self::PAGE_TITLE.' - '.config('app.name'),
             'metaDescription' => 'Simple time clock, shift scheduling and timesheet software for hourly teams. '
-                ."Clock in from any phone, publish schedules and export payroll. Free {$trialDays}-day trial.",
+                .'Clock in from any phone, publish schedules and export payroll. '
+                .($freeUntil ? "Free until {$freeUntil->format('F j, Y')}." : "Free {$trialDays}-day trial."),
             'structuredData' => $this->structuredData(),
         ]);
     }

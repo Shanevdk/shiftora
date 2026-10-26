@@ -26,11 +26,12 @@ class TrialEnding extends Notification implements ShouldQueue
     {
         return (new MailMessage)
             ->subject(__('Your Shiftora trial ends :date', ['date' => $this->organization->trial_ends_at?->format('F j')]))
-            ->line(__('The free trial for :organization ends on :date. Choose a plan to keep your team clocking in without interruption.', [
+            ->line(__('The free trial for :organization ends on :date. Continue with Shiftora to keep your team\'s schedules, time and timesheets going.', [
                 'organization' => $this->organization->name,
                 'date' => $this->organization->trial_ends_at?->format('F j'),
             ]))
-            ->action(__('Choose a plan'), route('billing.edit'));
+            ->line(__('If you don\'t, nothing is deleted. Your workspace turns read-only until you continue.'))
+            ->action(__('Continue with Shiftora'), route('continue.show'));
     }
 
     /**
@@ -42,7 +43,7 @@ class TrialEnding extends Notification implements ShouldQueue
             'organization_id' => $this->organization->id,
             'title' => __('Trial ending soon'),
             'body' => __('Your trial ends :date.', ['date' => $this->organization->trial_ends_at?->format('M j')]),
-            'url' => route('billing.edit', absolute: false),
+            'url' => route('continue.show', absolute: false),
         ];
     }
 }

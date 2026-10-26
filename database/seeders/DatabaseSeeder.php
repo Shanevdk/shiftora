@@ -10,7 +10,7 @@ class DatabaseSeeder extends Seeder
     /**
      * Seed a realistic demo organization.
      *
-     * Log in as test@example.com (owner), manager@example.com or employee@example.com; every password is "password".
+     * Log in as test@example.com (owner), manager@example.com or employee@example.com; every password is "password". The kiosk exit PIN is 1234.
      */
     public function run(CreateSampleOrganization $createSampleOrganization): void
     {

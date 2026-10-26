@@ -35,16 +35,6 @@ class OrganizationFactory extends Factory
     }
 
     /**
-     * Indicate that the organization is trialling the given plan.
-     */
-    public function onPlan(Plan $plan): static
-    {
-        return $this->state(fn (array $attributes) => [
-            'plan' => $plan,
-        ]);
-    }
-
-    /**
      * Indicate that the organization's free trial has ended without a subscription.
      */
     public function trialExpired(): static

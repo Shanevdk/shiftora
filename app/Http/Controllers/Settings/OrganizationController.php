@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Enums\Feature;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\OrganizationSettingsRequest;
+use App\Models\Organization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -34,6 +35,7 @@ class OrganizationController extends Controller
                 'logo_url' => $organization->logoUrl(),
             ],
             'payWeekFixed' => $organization->hasFixedPayWeek(),
+            'hasKioskPin' => $organization->hasKioskExitPin(),
             'features' => [
                 'overtimeRules' => $organization->hasFeature(Feature::OvertimeRules),
                 'geofencing' => $organization->hasFeature(Feature::Geofencing),
@@ -48,6 +50,26 @@ class OrganizationController extends Controller
         $this->toast(__('Organization settings saved.'));
 
         return to_route('organization.edit');
+    }
+
+    /**
+     * Set the organization PIN that takes a device out of kiosk mode.
+     */
+    public function updateKioskPin(Request $request): RedirectResponse
+    {
+        $organization = $this->organization();
+
+        Gate::authorize('update', $organization);
+
+        $validated = $request->validate([
+            'exit_pin' => ['required', 'string', 'regex:'.Organization::KIOSK_EXIT_PIN_PATTERN, 'confirmed'],
+        ], ['exit_pin.regex' => __('Use 4 to 8 digits.')]);
+
+        $organization->forceFill(['kiosk_exit_pin' => $validated['exit_pin']])->save();
+
+        $this->toast(__('Kiosk PIN updated.'));
+
+        return back();
     }
 
     /**

@@ -34,7 +34,7 @@ class DemoController extends Controller
     }
 
     /**
-     * Leave the demo and go to sign-up. Real accounts pass straight through untouched.
+     * Leave the demo and start a workspace of their own. Real accounts pass straight through untouched.
      */
     public function destroy(Request $request): RedirectResponse
     {
@@ -44,6 +44,6 @@ class DemoController extends Controller
             $request->session()->regenerateToken();
         }
 
-        return to_route('register');
+        return to_route('start.create');
     }
 }

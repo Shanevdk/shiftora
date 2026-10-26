@@ -32,8 +32,8 @@ class MakeAdmin extends Command
             return $this->revoke($user, $email);
         }
 
-        if ($user?->is_demo) {
-            $this->error('Demo accounts cannot be admins.');
+        if ($user?->is_demo || $user?->is_guest) {
+            $this->error('Demo and unsaved guest accounts cannot be admins.');
 
             return self::FAILURE;
         }

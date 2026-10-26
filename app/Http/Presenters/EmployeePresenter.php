@@ -40,6 +40,7 @@ class EmployeePresenter
             'hourly_rate_cents' => $employee->hourly_rate_cents,
             'location' => $employee->location?->only(['id', 'name']),
             'has_account' => $employee->user_id !== null,
+            'clock_pin' => $employee->clock_pin,
             'invited_at' => $employee->invited_at?->toIso8601String(),
             'created_at' => $employee->created_at?->toIso8601String(),
         ];

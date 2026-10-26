@@ -1,5 +1,5 @@
 import { Form, Head, Link, setLayoutProps } from '@inertiajs/react';
-import { CalendarClock, Mail, UserCheck, UserX } from 'lucide-react';
+import { CalendarClock, Mail, RefreshCw, UserCheck, UserX } from 'lucide-react';
 import { useState } from 'react';
 import { update } from '@/actions/App/Http/Controllers/EmployeeController';
 import EmployeeAvatar from '@/components/employees/employee-avatar';
@@ -24,6 +24,7 @@ import { Spinner } from '@/components/ui/spinner';
 import { useWorkspace } from '@/hooks/use-workspace';
 import { formatDateTime } from '@/lib/time';
 import { edit, index } from '@/routes/employees';
+import { update as updateClockPin } from '@/routes/employees/clock-pin';
 import { store as sendInvitation } from '@/routes/employees/invitation';
 import { update as updateStatus } from '@/routes/employees/status';
 import { show as showTimesheet } from '@/routes/timesheets';
@@ -123,6 +124,8 @@ export default function EmployeesEdit({
 
                 <AccountSection employee={employee} timeZone={timeZone} />
 
+                <KioskPinSection employee={employee} />
+
                 {canChangeStatus && <StatusSection employee={employee} />}
             </PageContainer>
         </>
@@ -159,7 +162,7 @@ function AccountSection({
                 title="Invitation"
                 description={
                     employee.email
-                        ? 'They need to accept an invitation to create a login before they can clock in.'
+                        ? 'They need to accept an invitation to create a login before they can see their schedule. They can already clock in on the kiosk with their PIN.'
                         : 'Add an email address above to invite them to Shiftora.'
                 }
             />
@@ -198,6 +201,44 @@ function AccountSection({
                     )}
                 </Form>
             )}
+        </section>
+    );
+}
+
+function KioskPinSection({ employee }: { employee: EmployeeDetail }) {
+    return (
+        <section className="space-y-4 rounded-xl border bg-card p-4 sm:p-6">
+            <Heading
+                variant="small"
+                title="Kiosk PIN"
+                description={`${employee.first_name} types this number on the kiosk keypad to clock in and out. Get a new one if someone else has learned it.`}
+            />
+
+            <Form
+                {...updateClockPin.form(employee.id)}
+                options={{ preserveScroll: true }}
+                className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+                {({ processing }) => (
+                    <>
+                        <p className="font-mono text-3xl font-semibold tracking-[0.3em] tabular">
+                            {employee.clock_pin ?? '—'}
+                        </p>
+                        <Button
+                            type="submit"
+                            variant="outline"
+                            disabled={processing}
+                        >
+                            {processing ? (
+                                <Spinner />
+                            ) : (
+                                <RefreshCw aria-hidden="true" />
+                            )}
+                            New PIN
+                        </Button>
+                    </>
+                )}
+            </Form>
         </section>
     );
 }

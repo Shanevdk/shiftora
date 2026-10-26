@@ -27,7 +27,7 @@ class OrganizationSettingsRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'timezone' => ['required', 'timezone:all'],
+            'timezone' => ['required', 'timezone:all_with_bc'],
             'week_starts_on' => ['required', 'integer', 'between:0,6'],
             'daily_overtime_hours' => ['nullable', 'numeric', 'min:1', 'max:24'],
             'weekly_overtime_hours' => ['nullable', 'numeric', 'min:1', 'max:168'],

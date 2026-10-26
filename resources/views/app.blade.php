@@ -4,6 +4,8 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <meta name="theme-color" content="#1e2124">
+        {{-- Lets live timers correct for a device clock that runs fast or slow (see resources/js/lib/time.ts). --}}
+        <meta name="server-time" content="{{ now()->getTimestampMs() }}">
 
         {{-- Inline script to detect system dark mode preference and apply it immediately --}}
         <script>

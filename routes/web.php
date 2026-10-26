@@ -2,19 +2,24 @@
 
 use App\Http\Controllers\Admin\AdminDashboardController;
 use App\Http\Controllers\AuditLogController;
+use App\Http\Controllers\ContinueController;
 use App\Http\Controllers\CurrentOrganizationController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DemoController;
+use App\Http\Controllers\EmployeeClockPinController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\EmployeeInvitationController;
 use App\Http\Controllers\EmployeeStatusController;
+use App\Http\Controllers\GuestWorkspaceController;
 use App\Http\Controllers\InvitationController;
+use App\Http\Controllers\KioskController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\MoveShiftController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\OnboardingController;
 use App\Http\Controllers\PublishScheduleController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\SaveWorkspaceController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\SitemapController;
@@ -35,6 +40,9 @@ Route::get('robots.txt', [SitemapController::class, 'robots'])->name('robots');
 Route::post('demo', [DemoController::class, 'store'])->middleware('throttle:5,1')->name('demo.store');
 Route::get('demo/exit', [DemoController::class, 'destroy'])->name('demo.destroy');
 
+Route::get('start', [GuestWorkspaceController::class, 'create'])->name('start.create');
+Route::post('start', [GuestWorkspaceController::class, 'store'])->middleware('throttle:5,1')->name('start.store');
+
 Route::middleware('signed')->group(function () {
     Route::get('invitations/{employee}', [InvitationController::class, 'show'])->name('invitations.show');
     Route::post('invitations/{employee}', [InvitationController::class, 'store'])
@@ -50,9 +58,19 @@ Route::middleware('auth')->group(function () {
     Route::get('onboarding', [OnboardingController::class, 'create'])->name('onboarding.create');
     Route::post('onboarding', [OnboardingController::class, 'store'])->name('onboarding.store');
 
+    Route::get('save-workspace', [SaveWorkspaceController::class, 'create'])->name('save-workspace.create');
+    Route::post('save-workspace', [SaveWorkspaceController::class, 'store'])
+        ->middleware('throttle:6,1')
+        ->name('save-workspace.store');
+
     Route::middleware('organization')->group(function () {
         Route::put('current-organization', [CurrentOrganizationController::class, 'update'])->name('current-organization.update');
         Route::post('notifications/read', [NotificationController::class, 'markAllRead'])->name('notifications.read');
+
+        Route::get('continue', [ContinueController::class, 'show'])->name('continue.show');
+        Route::post('continue', [ContinueController::class, 'store'])
+            ->middleware(['not-demo', 'throttle:10,1'])
+            ->name('continue.store');
 
         Route::middleware('subscribed')->group(function () {
             Route::get('dashboard', DashboardController::class)->name('dashboard');
@@ -64,6 +82,14 @@ Route::middleware('auth')->group(function () {
                 Route::post('time-clock/break', [TimeClockController::class, 'startBreak'])->name('time-clock.break.start');
                 Route::delete('time-clock/break', [TimeClockController::class, 'endBreak'])->name('time-clock.break.end');
             });
+
+            Route::get('kiosk', [KioskController::class, 'show'])->name('kiosk.show');
+            Route::middleware('throttle:60,1')->group(function () {
+                Route::post('kiosk/lookup', [KioskController::class, 'lookup'])->name('kiosk.lookup');
+                Route::post('kiosk/punch', [KioskController::class, 'punch'])->name('kiosk.punch');
+            });
+            Route::put('kiosk/exit-pin', [KioskController::class, 'storeExitPin'])->middleware('throttle:6,1')->name('kiosk.exit-pin.store');
+            Route::delete('kiosk', [KioskController::class, 'destroy'])->middleware('throttle:6,1')->name('kiosk.destroy');
 
             Route::get('timesheets', [TimesheetController::class, 'index'])->name('timesheets.index');
             Route::get('timesheets/{employee}', [TimesheetController::class, 'show'])->name('timesheets.show');
@@ -94,6 +120,7 @@ Route::middleware('auth')->group(function () {
             Route::post('employees/{employee}/invitation', [EmployeeInvitationController::class, 'store'])
                 ->middleware('throttle:6,1')
                 ->name('employees.invitation.store');
+            Route::put('employees/{employee}/clock-pin', [EmployeeClockPinController::class, 'update'])->name('employees.clock-pin.update');
 
             Route::middleware('feature:reports')->group(function () {
                 Route::get('reports', [ReportController::class, 'index'])->name('reports.index');

@@ -13,11 +13,12 @@ class InviteEmployee
      * Email the employee a signed link to create (or connect) their Shiftora login.
      *
      * Sent right away rather than queued, so the manager learns immediately whether it went out.
-     * Returns false (and reports the error) when the email could not be sent.
+     * Returns false (and reports the error) when the email could not be sent. Guest workspaces hold
+     * invitations back until the owner saves the workspace with a real login.
      */
     public function handle(Employee $employee): bool
     {
-        if ($employee->email === null || $employee->user_id !== null) {
+        if ($employee->email === null || $employee->user_id !== null || $employee->organization->is_guest) {
             return false;
         }
 

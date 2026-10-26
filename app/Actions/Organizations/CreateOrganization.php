@@ -2,7 +2,6 @@
 
 namespace App\Actions\Organizations;
 
-use App\Enums\Plan;
 use App\Enums\Role;
 use App\Models\Employee;
 use App\Models\Organization;
@@ -13,9 +12,10 @@ use Illuminate\Support\Str;
 class CreateOrganization
 {
     /**
-     * Create an organization on a no-card free trial, with the user as its owner.
+     * Create an organization on a no-card free trial with every feature unlocked, with the user as its owner.
+     * The plan is chosen when the owner continues after trying it.
      *
-     * @param  array{name: string, timezone: string, plan: string}  $data
+     * @param  array{name: string, timezone: string}  $data
      */
     public function handle(User $user, array $data): Organization
     {
@@ -24,8 +24,8 @@ class CreateOrganization
                 'name' => $data['name'],
                 'slug' => $this->uniqueSlug($data['name']),
                 'timezone' => $data['timezone'],
-                'plan' => Plan::from($data['plan']),
-                'trial_ends_at' => now()->addDays(config('shiftora.trial_days')),
+                'plan' => Organization::TRIAL_PLAN,
+                'trial_ends_at' => Organization::newTrialEndsAt(),
             ]);
 
             $location = $organization->locations()->create(['name' => __('Main location')]);
@@ -37,7 +37,7 @@ class CreateOrganization
                 'location_id' => $location->id,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
-                'email' => $user->email,
+                'email' => $user->is_guest ? null : $user->email,
                 'role' => Role::Owner,
                 'color' => Employee::COLORS[0],
             ]);

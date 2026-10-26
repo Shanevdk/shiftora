@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Actions\Organizations\CreateOrganization;
-use App\Enums\Plan;
 use App\Http\Requests\OnboardingRequest;
+use App\Models\Organization;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -13,7 +13,7 @@ use Inertia\Response;
 class OnboardingController extends Controller
 {
     /**
-     * Ask a new user to set up their organization.
+     * Ask a new user to set up their organization. Plans come later, once they have tried it.
      */
     public function create(Request $request): Response|RedirectResponse
     {
@@ -22,8 +22,8 @@ class OnboardingController extends Controller
         }
 
         return Inertia::render('onboarding', [
-            'plans' => array_map(fn (Plan $plan): array => $plan->toArray(), Plan::cases()),
             'trialDays' => config('shiftora.trial_days'),
+            'freeUntil' => Organization::onFreePromotion() ? Organization::freeUntil()->toDateString() : null,
         ]);
     }
 
@@ -35,12 +35,11 @@ class OnboardingController extends Controller
         $createOrganization->handle($request->user(), [
             'name' => $request->string('name')->toString(),
             'timezone' => $request->string('timezone')->toString(),
-            'plan' => $request->string('plan')->toString(),
         ]);
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => __('Welcome to Shiftora! Your :days-day trial has started.', ['days' => config('shiftora.trial_days')]),
+            'message' => __('Welcome to Shiftora! Start by adding your team.'),
         ]);
 
         return to_route('dashboard');

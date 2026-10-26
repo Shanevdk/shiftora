@@ -41,6 +41,7 @@ Route::middleware('auth')->group(function () {
             Route::get('settings/organization', [OrganizationController::class, 'edit'])->name('organization.edit');
             Route::patch('settings/organization', [OrganizationController::class, 'update'])->name('organization.update');
             Route::post('settings/organization/logo', [OrganizationController::class, 'updateLogo'])->middleware('not-demo')->name('organization.logo.update');
+            Route::put('settings/organization/kiosk-pin', [OrganizationController::class, 'updateKioskPin'])->middleware('throttle:6,1')->name('organization.kiosk-pin.update');
             Route::delete('settings/organization/logo', [OrganizationController::class, 'destroyLogo'])->name('organization.logo.destroy');
 
             Route::get('settings/locations', [LocationController::class, 'index'])->name('locations.index');

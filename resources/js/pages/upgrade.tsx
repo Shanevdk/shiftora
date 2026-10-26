@@ -1,11 +1,14 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, Lock, Sparkles } from 'lucide-react';
+import { Lock, Sparkles } from 'lucide-react';
 import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { useWorkspace } from '@/hooks/use-workspace';
-import { dashboard } from '@/routes';
 import { edit as billing } from '@/routes/billing';
 
+/**
+ * Shown in place of a page whose feature the organization's paid plan doesn't include.
+ * Trials include everything, so only paying customers on a smaller plan see this.
+ */
 export default function Upgrade({
     feature,
     requiredPlan,
@@ -42,27 +45,18 @@ export default function Upgrade({
                     </div>
 
                     {canManageBilling ? (
-                        <div className="flex w-full flex-col gap-2">
-                            <Button size="lg" className="w-full" asChild>
-                                <Link href={billing()}>
-                                    <Sparkles />
-                                    Upgrade to {requiredPlan}
-                                </Link>
-                            </Button>
-                        </div>
+                        <Button size="lg" className="w-full" asChild>
+                            <Link href={billing()}>
+                                <Sparkles />
+                                Switch to {requiredPlan}
+                            </Link>
+                        </Button>
                     ) : (
                         <p className="rounded-lg bg-muted px-4 py-3 text-sm text-muted-foreground">
                             Only your account owner can change the plan. Ask
-                            them to upgrade to {requiredPlan} to unlock it.
+                            them to switch to {requiredPlan} to unlock it.
                         </p>
                     )}
-
-                    <Button variant="ghost" size="sm" asChild>
-                        <Link href={dashboard()}>
-                            <ArrowLeft />
-                            Back to dashboard
-                        </Link>
-                    </Button>
                 </div>
             </PageContainer>
         </>

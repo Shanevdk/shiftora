@@ -30,7 +30,7 @@ class EmployeeController extends Controller
 
         $status = $filters['status'] ?? 'active';
         $organization = $this->organization();
-        $plan = $organization->activePlan() ?? $organization->plan;
+        $plan = $organization->visiblePlan();
 
         $employees = Employee::query()
             ->with('location')
@@ -77,10 +77,13 @@ class EmployeeController extends Controller
             $request->boolean('send_invitation', true),
         );
 
-        $invitationFailed = $request->boolean('send_invitation', true) && $employee->email !== null && $employee->invited_at === null;
+        $invitationWanted = $request->boolean('send_invitation', true) && $employee->email !== null;
+        $invitationHeld = $invitationWanted && $this->organization()->is_guest;
+        $invitationFailed = $invitationWanted && ! $invitationHeld && $employee->invited_at === null;
 
         $this->toast(match (true) {
             $employee->invited_at !== null => __(':name was added and invited by email.', ['name' => $employee->full_name]),
+            $invitationHeld => __(':name was added. Their invite goes out as soon as you save your workspace.', ['name' => $employee->full_name]),
             $invitationFailed => __(':name was added, but the invitation email could not be sent. You can resend it from their profile.', ['name' => $employee->full_name]),
             default => __(':name was added to your team.', ['name' => $employee->full_name]),
         }, $invitationFailed ? 'warning' : 'success');

@@ -37,6 +37,7 @@ export type Permissions = {
     viewReports: boolean;
     viewAuditLog: boolean;
     manageBilling: boolean;
+    runKiosk: boolean;
 };
 
 export type Membership = {
@@ -72,6 +73,8 @@ export type Plan = {
     name: string;
     description: string;
     price_per_employee_cents: number;
+    /** ISO code the plan is billed in, e.g. "CAD". */
+    currency: string;
     employee_limit: number | null;
     location_limit: number | null;
     features: { value: FeatureKey; label: string }[];
@@ -100,6 +103,7 @@ export type EmployeeDetail = EmployeeSummary & {
     hourly_rate_cents: number | null;
     location: LocationOption | null;
     has_account: boolean;
+    clock_pin: string | null;
     invited_at: string | null;
     created_at: string | null;
 };
@@ -126,7 +130,8 @@ export type TimeEntry = {
     clock_out_at: string | null;
     break_minutes: number;
     worked_minutes: number;
-    source: 'clock' | 'manual';
+    worked_seconds: number;
+    source: 'clock' | 'manual' | 'kiosk';
     notes: string | null;
     is_open: boolean;
     on_break_since: string | null;

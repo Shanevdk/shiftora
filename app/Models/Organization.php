@@ -9,12 +9,14 @@ use Carbon\CarbonImmutable;
 use Carbon\CarbonInterface;
 use Database\Factories\OrganizationFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
+use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Prunable;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Laravel\Cashier\Billable;
 
@@ -27,9 +29,11 @@ use Laravel\Cashier\Billable;
  * @property string|null $logo_path
  * @property Plan $plan
  * @property bool $is_demo
+ * @property bool $is_guest Started from the landing page without a login, until the workspace is saved.
  * @property int|null $daily_overtime_minutes
  * @property int|null $weekly_overtime_minutes
  * @property bool $geofencing_enabled
+ * @property string|null $kiosk_exit_pin Hashed PIN a manager enters to take a device out of kiosk mode.
  * @property string|null $stripe_id
  * @property string|null $pm_type
  * @property string|null $pm_last_four
@@ -39,6 +43,7 @@ use Laravel\Cashier\Billable;
  * @property Carbon|null $updated_at
  */
 #[Fillable(['name', 'slug', 'timezone', 'week_starts_on', 'plan', 'daily_overtime_minutes', 'weekly_overtime_minutes', 'geofencing_enabled', 'trial_ends_at'])]
+#[Hidden(['kiosk_exit_pin'])]
 class Organization extends Model
 {
     /** @use HasFactory<OrganizationFactory> */
@@ -55,31 +60,33 @@ class Organization extends Model
             'daily_overtime_minutes' => 'integer',
             'weekly_overtime_minutes' => 'integer',
             'geofencing_enabled' => 'boolean',
+            'kiosk_exit_pin' => 'hashed',
             'trial_ends_at' => 'datetime',
             'trial_ending_notified_at' => 'datetime',
             'is_demo' => 'boolean',
+            'is_guest' => 'boolean',
         ];
     }
 
     /**
-     * Demo workspaces started from the landing page are thrown away a day after they are created.
+     * Demos, and guest workspaces nobody saved with a login, are thrown away a day after they are created.
      *
      * @return Builder<static>
      */
     public function prunable(): Builder
     {
         return static::query()
-            ->where('is_demo', true)
+            ->where(fn (Builder $query) => $query->where('is_demo', true)->orWhere('is_guest', true))
             ->where('created_at', '<=', now()->subDay());
     }
 
     /**
-     * Remove the demo's throwaway logins and logo along with it.
+     * Remove the throwaway logins and logo along with it.
      */
     protected function pruning(): void
     {
         User::query()
-            ->where('is_demo', true)
+            ->where(fn (Builder $query) => $query->where('is_demo', true)->orWhere('is_guest', true))
             ->whereIn('id', Employee::withoutGlobalScopes()->where('organization_id', $this->id)->whereNotNull('user_id')->select('user_id'))
             ->get()
             ->each(function (User $user): void {
@@ -141,6 +148,12 @@ class Organization extends Model
     }
 
     /**
+     * Every feature is unlocked during the no-card trial, so people try the whole product before
+     * they choose what to pay for.
+     */
+    public const TRIAL_PLAN = Plan::Business;
+
+    /**
      * The plan whose entitlements currently apply, or null when access has lapsed.
      */
     public function activePlan(): ?Plan
@@ -152,10 +165,37 @@ class Organization extends Model
         }
 
         if ($this->onGenericTrial()) {
-            return $this->plan;
+            return self::TRIAL_PLAN;
         }
 
         return null;
+    }
+
+    /**
+     * The plan whose features the workspace shows. Once access lapses the workspace stays readable
+     * with what it had: everything after a trial, or the plan of the subscription that ended.
+     */
+    public function visiblePlan(): Plan
+    {
+        $activePlan = $this->activePlan();
+
+        if ($activePlan !== null) {
+            return $activePlan;
+        }
+
+        $subscription = $this->subscription(config('shiftora.subscription_type'));
+
+        return $subscription === null
+            ? self::TRIAL_PLAN
+            : (Plan::fromStripePrice($subscription->stripe_price) ?? $this->plan);
+    }
+
+    /**
+     * Whether access has lapsed. A read-only workspace can be viewed but not changed until the owner continues.
+     */
+    public function isReadOnly(): bool
+    {
+        return ! $this->hasActiveAccess();
     }
 
     /**
@@ -176,14 +216,43 @@ class Organization extends Model
         return self::freeUntil()?->isFuture() ?? false;
     }
 
+    /**
+     * When a new organization's no-card trial ends. During the launch promotion it runs until the promotion does.
+     */
+    public static function newTrialEndsAt(): CarbonInterface
+    {
+        $trialEndsAt = now()->addDays(config('shiftora.trial_days'));
+
+        return self::onFreePromotion() ? $trialEndsAt->max(self::freeUntil()) : $trialEndsAt;
+    }
+
     public function hasActiveAccess(): bool
     {
         return $this->activePlan() !== null;
     }
 
+    /**
+     * Kiosk exit PINs are 4 to 8 digits.
+     */
+    public const KIOSK_EXIT_PIN_PATTERN = '/^\d{4,8}$/';
+
+    public function hasKioskExitPin(): bool
+    {
+        return $this->kiosk_exit_pin !== null;
+    }
+
+    public function checkKioskExitPin(string $pin): bool
+    {
+        return $this->hasKioskExitPin() && Hash::check($pin, $this->kiosk_exit_pin);
+    }
+
+    /**
+     * Whether the workspace shows the feature. A read-only workspace keeps showing what it had, but
+     * every change is refused until access is restored.
+     */
     public function hasFeature(Feature $feature): bool
     {
-        return $this->activePlan()?->includes($feature) ?? false;
+        return $this->visiblePlan()->includes($feature);
     }
 
     public function isSubscribed(): bool
@@ -207,14 +276,14 @@ class Organization extends Model
 
     public function hasReachedEmployeeLimit(): bool
     {
-        $limit = ($this->activePlan() ?? $this->plan)->employeeLimit();
+        $limit = $this->visiblePlan()->employeeLimit();
 
         return $limit !== null && $this->activeEmployeeCount() >= $limit;
     }
 
     public function hasReachedLocationLimit(): bool
     {
-        $limit = ($this->activePlan() ?? $this->plan)->locationLimit();
+        $limit = $this->visiblePlan()->locationLimit();
 
         return $limit !== null && $this->locations()->count() >= $limit;
     }

@@ -40,6 +40,7 @@ class TimeClockController extends Controller
 
         return Inertia::render('time-clock', [
             'clock' => TimeEntryPresenter::clockState($employee),
+            'clockPin' => $employee->clock_pin,
             'todayEntries' => $employee->timeEntries()
                 ->with(['openBreak', 'location'])
                 ->where('clock_in_at', '>=', $localToday->utc())

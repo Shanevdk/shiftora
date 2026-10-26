@@ -22,7 +22,7 @@ class LocationController extends Controller
         Gate::authorize('viewAny', Location::class);
 
         $organization = $this->organization();
-        $plan = $organization->activePlan() ?? $organization->plan;
+        $plan = $organization->visiblePlan();
 
         return Inertia::render('settings/locations', [
             'locations' => Location::query()

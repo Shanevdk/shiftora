@@ -66,7 +66,7 @@ export default function EmployeeFormFields({
 
     return (
         <div className="grid gap-6">
-            <div className="grid gap-6 sm:grid-cols-2">
+            <div className="grid items-start gap-6 sm:grid-cols-2">
                 <div className="grid gap-2">
                     <Label htmlFor="first_name">First name</Label>
                     <Input

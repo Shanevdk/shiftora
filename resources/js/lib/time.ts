@@ -6,6 +6,52 @@
  * city sees the same times as the people on site.
  */
 
+/**
+ * How far the server's clock is ahead of this device's, in milliseconds.
+ *
+ * Live timers compare server timestamps with "now", so a device clock that runs two minutes fast
+ * would start a fresh clock-in at 0:02:00. The server stamps every full page load with its time,
+ * and comparing that with when this device received the page gives the difference. A page shown
+ * from the browser cache (back/forward) carries an old stamp, so it falls back to the device clock.
+ */
+const serverClockOffset = measureServerClockOffset();
+
+function measureServerClockOffset(): number {
+    if (typeof document === 'undefined') {
+        return 0;
+    }
+
+    const serverTime = Number(
+        document
+            .querySelector('meta[name="server-time"]')
+            ?.getAttribute('content'),
+    );
+    const [navigation] = performance.getEntriesByType(
+        'navigation',
+    ) as PerformanceNavigationTiming[];
+
+    if (
+        !serverTime ||
+        navigation === undefined ||
+        navigation.type === 'back_forward' ||
+        navigation.transferSize === 0
+    ) {
+        return 0;
+    }
+
+    const receivedAt =
+        Date.now() - (performance.now() - navigation.responseStart);
+    const offset = serverTime - receivedAt;
+
+    // A second or two is only the time the page took to arrive, not a wrong clock.
+    return Math.abs(offset) < 5000 ? 0 : offset;
+}
+
+/** The current time by the server's clock, in milliseconds. Use it instead of `Date.now()`. */
+export function serverNow(): number {
+    return Date.now() + serverClockOffset;
+}
+
 /** "7h 30m", "45m" or "0m". */
 export function formatMinutes(minutes: number): string {
     const safeMinutes = Math.max(0, Math.round(minutes));
@@ -17,6 +63,17 @@ export function formatMinutes(minutes: number): string {
     }
 
     return remainder === 0 ? `${hours}h` : `${hours}h ${remainder}m`;
+}
+
+/** Time worked from seconds: "45s" under a minute, otherwise whole minutes like "1h 5m". */
+export function formatWorkedSeconds(seconds: number): string {
+    const safeSeconds = Math.max(0, Math.floor(seconds));
+
+    if (safeSeconds > 0 && safeSeconds < 60) {
+        return `${safeSeconds}s`;
+    }
+
+    return formatMinutes(Math.floor(safeSeconds / 60));
 }
 
 /** Decimal hours with two places, e.g. "7.50". */
@@ -138,11 +195,14 @@ export function toDateTimeLocalInput(iso: string, timeZone: string): string {
 
 /** Today's local `YYYY-MM-DD` date in the given timezone. */
 export function today(timeZone: string): string {
-    return localDate(new Date().toISOString(), timeZone);
+    return localDate(new Date(serverNow()).toISOString(), timeZone);
 }
 
 /** Whole minutes elapsed since the timestamp. */
-export function minutesSince(iso: string, now: Date = new Date()): number {
+export function minutesSince(
+    iso: string,
+    now: Date = new Date(serverNow()),
+): number {
     return Math.max(
         0,
         Math.floor((now.getTime() - new Date(iso).getTime()) / 60000),
@@ -157,8 +217,23 @@ export function formatCurrency(cents: number, currency = 'USD'): string {
     }).format(cents / 100);
 }
 
+/** A Shiftora plan price with its currency spelled out: "$7 CAD", "$84.50 CAD". */
+export function formatPrice(cents: number, currency: string): string {
+    const amount = new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency,
+        currencyDisplay: 'narrowSymbol',
+        minimumFractionDigits: cents % 100 === 0 ? 0 : 2,
+    }).format(cents / 100);
+
+    return `${amount} ${currency}`;
+}
+
 /** "3 minutes ago", "yesterday". */
-export function formatRelative(iso: string, now: Date = new Date()): string {
+export function formatRelative(
+    iso: string,
+    now: Date = new Date(serverNow()),
+): string {
     const seconds = Math.round(
         (new Date(iso).getTime() - now.getTime()) / 1000,
     );

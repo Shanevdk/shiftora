@@ -80,7 +80,7 @@ test('dragging a shift moves it to another day and employee while keeping its lo
 });
 
 test('starter organizations get the time clock but no scheduling', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
 
     $this->actingAs($this->manager)
         ->get(route('schedule.index'))
@@ -103,7 +103,7 @@ test('starter organizations get the time clock but no scheduling', function () {
 });
 
 test('drag and drop scheduling requires the professional plan', function () {
-    $this->organization->update(['plan' => Plan::Starter]);
+    subscribeTo($this->organization, Plan::Starter);
     $shift = Shift::factory()->for($this->employee)->create();
 
     $this->actingAs($this->manager)
