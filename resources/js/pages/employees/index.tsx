@@ -148,8 +148,8 @@ export default function EmployeesIndex({
                     isFiltered ? (
                         <EmptyState
                             icon={Search}
-                            title="No matching employees"
-                            description="Try a different search or status filter."
+                            title="Nobody matches that"
+                            description="Try a different name, or switch the filter to All."
                             action={
                                 <Button
                                     variant="outline"
@@ -165,8 +165,8 @@ export default function EmployeesIndex({
                     ) : (
                         <EmptyState
                             icon={Users}
-                            title="No employees yet"
-                            description="Add your team so they can clock in, see their schedule and submit timesheets."
+                            title="It's just you so far"
+                            description="Add your team and they'll get an invite to clock in, see their shifts and send in timesheets."
                             action={
                                 canCreate && (
                                     <Button asChild>

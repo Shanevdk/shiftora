@@ -87,8 +87,8 @@ export default function Locations({
                 {locations.length === 0 ? (
                     <EmptyState
                         icon={MapPin}
-                        title="No locations yet"
-                        description="Add the place your team works so you can assign shifts and set up geofenced clock-in."
+                        title="Where does your team work?"
+                        description="Add a location to schedule shifts there and, if you like, only allow clock-ins on site."
                     />
                 ) : (
                     <ul className="divide-y rounded-xl border bg-card">

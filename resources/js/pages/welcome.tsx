@@ -11,6 +11,8 @@ import {
     Smartphone,
     Tablet,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import type { ReactNode } from 'react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import LiveDemo from '@/components/live-demo';
 import LiveDemoFrame from '@/components/live-demo-frame';
@@ -24,42 +26,65 @@ import { create as startWorkspace } from '@/routes/start';
 import type { Plan } from '@/types';
 
 // Draft copy, written plainly; rewrite it in your own voice before launch.
-const features = [
+const features: { icon: LucideIcon; title: string; description: string }[] = [
     {
         icon: Clock,
         title: 'Clock in from their phone',
         description:
-            'Staff tap once to clock in and out. Nothing to install, and you see the hours add up as they work.',
+            'One tap in, one tap out. Nothing to install, and you watch the hours add up as they work.',
     },
     {
         icon: Tablet,
         title: 'Or a tablet by the door',
         description:
-            'No phone, no problem. Put a tablet on the wall and people punch in with their own PIN.',
+            'No phone on them? Stick a tablet on the wall and people punch in with their own PIN.',
     },
     {
         icon: CalendarDays,
-        title: 'Schedules people actually see',
+        title: 'Schedules people actually read',
         description:
             'Drag shifts onto the week and publish. Everyone gets their shifts by email and in the app.',
     },
     {
         icon: ClipboardCheck,
-        title: 'Timesheets ready for payroll',
+        title: 'Timesheets that stop moving',
         description:
-            'Staff send in their week, you approve it, and it locks so the numbers stop changing.',
+            'Staff send in their week, you approve it, and it locks so nobody edits Tuesday after payroll.',
     },
     {
         icon: BarChart3,
         title: 'Hours and labor cost',
         description:
-            'Hours, overtime and labor cost per person and per day. Export it to CSV for payroll.',
+            'Who worked what, overtime included, per person and per day. Export it to CSV for payroll.',
     },
     {
         icon: MapPin,
         title: 'Clock in only on site',
         description:
-            'Set a radius around each location so people can only clock in when they are actually there.',
+            'Draw a radius around each location so nobody clocks in from the bus.',
+    },
+];
+
+const audiences: { icon: LucideIcon; title: string; points: string[] }[] = [
+    {
+        icon: Briefcase,
+        title: 'Owners and managers',
+        points: [
+            'Add your team and send invites',
+            'Build the week and publish it',
+            "See who's on the clock right now",
+            'Approve timesheets and export for payroll',
+        ],
+    },
+    {
+        icon: Smartphone,
+        title: 'Your staff',
+        points: [
+            'Get an email invite, nothing to download',
+            'Clock in from a phone or a shared tablet',
+            'See their next shifts',
+            'Send in their week for approval',
+        ],
     },
 ];
 
@@ -88,11 +113,9 @@ export default function Welcome({
                         <span className="flex size-9 items-center justify-center rounded-lg bg-warm-white ring-1 ring-border">
                             <AppLogoIcon className="size-6" />
                         </span>
-                        <span className="text-lg font-semibold tracking-tight">
-                            Shiftora
-                        </span>
+                        <span className="font-display text-2xl">Shiftora</span>
                     </Link>
-                    <nav className="flex items-center gap-2">
+                    <nav className="flex items-center gap-1 sm:gap-2">
                         <a
                             href="#demo"
                             className="hidden px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:inline"
@@ -125,19 +148,21 @@ export default function Welcome({
                 </header>
 
                 <main>
-                    <section className="mx-auto grid w-full max-w-6xl items-center gap-12 px-4 pt-10 pb-20 md:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-16">
-                        <div className="space-y-6">
-                            <p className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-accent px-3 py-1 text-xs font-medium text-accent-foreground">
-                                Work smarter. Shift better.
-                            </p>
+                    <section className="mx-auto grid w-full max-w-6xl gap-14 px-4 pt-12 pb-24 md:px-6 lg:grid-cols-12 lg:items-center lg:pt-20">
+                        <div className="space-y-8 lg:col-span-7">
+                            <Eyebrow>
+                                Time clock and scheduling for shift work
+                            </Eyebrow>
                             {/* Draft copy: rewrite the promise in your own voice. */}
-                            <h1 className="text-4xl font-semibold tracking-tight text-balance sm:text-5xl">
-                                Your team clocks in from their phone, and you
-                                get timesheets ready for payroll.
+                            <h1 className="font-display text-5xl leading-[0.95] tracking-tight text-balance sm:text-6xl lg:text-7xl">
+                                Your team clocks in from{' '}
+                                <HandUnderline>their phone</HandUnderline>, and
+                                you get timesheets ready for payroll.
                             </h1>
-                            <p className="max-w-xl text-lg text-muted-foreground">
-                                No app to install. They open a link, see their
-                                shifts and tap to clock in.
+                            <p className="max-w-lg text-lg leading-relaxed text-muted-foreground">
+                                No app to download and no paper cards to chase
+                                on Friday. Staff open a link, check their shifts
+                                and tap in.
                             </p>
                             {customer ? (
                                 <Button size="lg" asChild>
@@ -147,135 +172,195 @@ export default function Welcome({
                                     </Link>
                                 </Button>
                             ) : (
-                                <div className="flex flex-wrap items-start gap-3">
-                                    <LiveDemo />
-                                    <Button
-                                        size="lg"
-                                        variant="outline"
-                                        className="h-14 px-6 text-base"
-                                        asChild
-                                    >
-                                        <Link href={startFree}>
-                                            {freeUntil
-                                                ? `Use it free till ${freeUntil.slice(0, 4)}`
-                                                : `Start your ${trialDays}-day free trial`}
-                                        </Link>
-                                    </Button>
+                                <div className="space-y-3">
+                                    <div className="flex flex-wrap items-start gap-3">
+                                        <LiveDemo />
+                                        <Button
+                                            size="lg"
+                                            variant="outline"
+                                            className="h-14 px-6 text-base"
+                                            asChild
+                                        >
+                                            <Link href={startFree}>
+                                                {freeUntil
+                                                    ? `Use it free till ${freeUntil.slice(0, 4)}`
+                                                    : `Start your ${trialDays}-day free trial`}
+                                            </Link>
+                                        </Button>
+                                    </div>
+                                    <p className="text-sm text-muted-foreground">
+                                        The demo sets itself up in a few
+                                        seconds. No email, no card.
+                                    </p>
                                 </div>
                             )}
                         </div>
 
-                        <ProductPreview />
-                    </section>
-
-                    <WhoUsesIt />
-
-                    <section id="demo" className="scroll-mt-8 border-t bg-card">
-                        <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-20 md:px-6">
-                            <div className="mx-auto max-w-2xl space-y-3 text-center">
-                                <h2 className="text-3xl font-semibold tracking-tight">
-                                    Take it for a spin
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    This is the real Shiftora, not a video. No
-                                    account needed.
-                                </p>
-                            </div>
-                            <LiveDemoFrame />
+                        <div className="lg:col-span-5">
+                            <TimeCard />
                         </div>
                     </section>
 
-                    <section className="border-y bg-card">
-                        <div className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6">
-                            <div className="max-w-2xl space-y-3">
-                                <h2 className="text-3xl font-semibold tracking-tight">
-                                    What it does
-                                </h2>
-                                <p className="text-muted-foreground">
-                                    For cafés, restaurants, shops, warehouses
-                                    and crews who work in shifts.
-                                </p>
-                            </div>
-                            <div className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
-                                {features.map((feature) => (
+                    <section className="border-t">
+                        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 md:px-6 lg:grid-cols-12 lg:gap-12">
+                            <SectionIntro
+                                className="lg:col-span-4"
+                                eyebrow="Who it's for"
+                                title="Two sides of the counter, one app"
+                            >
+                                Everyone logs in from the same page. Shiftora
+                                shows each person only what they need.
+                            </SectionIntro>
+                            <div className="grid gap-10 sm:grid-cols-2 sm:gap-0 sm:divide-x lg:col-span-8">
+                                {audiences.map((audience) => (
                                     <div
-                                        key={feature.title}
-                                        className="space-y-3"
+                                        key={audience.title}
+                                        className="space-y-4 sm:px-8 sm:first:pl-0 sm:last:pr-0"
                                     >
-                                        <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                                            <feature.icon
-                                                className="size-5"
+                                        <h3 className="flex items-center gap-2 font-semibold">
+                                            <audience.icon
+                                                className="size-4 text-primary"
                                                 aria-hidden="true"
                                             />
-                                        </span>
-                                        <h3 className="font-semibold">
-                                            {feature.title}
+                                            {audience.title}
                                         </h3>
-                                        <p className="text-sm leading-relaxed text-muted-foreground">
-                                            {feature.description}
-                                        </p>
+                                        <ul className="divide-y text-sm">
+                                            {audience.points.map((point) => (
+                                                <li
+                                                    key={point}
+                                                    className="py-2.5"
+                                                >
+                                                    {point}
+                                                </li>
+                                            ))}
+                                        </ul>
                                     </div>
                                 ))}
                             </div>
                         </div>
                     </section>
 
+                    <section id="demo" className="scroll-mt-8 border-t bg-card">
+                        <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-20 md:px-6">
+                            <div className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-12">
+                                <SectionIntro
+                                    className="lg:col-span-5"
+                                    eyebrow="Live demo"
+                                    title="Poke around a real café"
+                                />
+                                <p className="max-w-md text-muted-foreground lg:col-span-6 lg:col-start-7">
+                                    Northwind Coffee has eleven staff, two
+                                    locations and three weeks of shifts. You're
+                                    the owner. Break whatever you like; it
+                                    resets tomorrow.
+                                </p>
+                            </div>
+                            <LiveDemoFrame />
+                        </div>
+                    </section>
+
+                    <section className="border-t">
+                        <div className="mx-auto grid w-full max-w-6xl gap-10 px-4 py-20 md:px-6 lg:grid-cols-12 lg:gap-12">
+                            <SectionIntro
+                                className="lg:sticky lg:top-12 lg:col-span-4 lg:self-start"
+                                eyebrow="What it does"
+                                title="The parts you'll use every week"
+                            >
+                                Made for cafés, restaurants, shops, warehouses
+                                and crews who work in shifts.
+                            </SectionIntro>
+                            <ol className="divide-y border-y lg:col-span-8">
+                                {features.map((feature, index) => (
+                                    <li
+                                        key={feature.title}
+                                        className="grid grid-cols-[3rem_1fr] gap-x-4 py-6 sm:grid-cols-[4rem_1fr_auto]"
+                                    >
+                                        <span className="font-display text-3xl text-muted-foreground tabular">
+                                            {String(index + 1).padStart(2, '0')}
+                                        </span>
+                                        <div className="space-y-1.5">
+                                            <h3 className="text-lg font-semibold">
+                                                {feature.title}
+                                            </h3>
+                                            <p className="max-w-md text-muted-foreground">
+                                                {feature.description}
+                                            </p>
+                                        </div>
+                                        <feature.icon
+                                            className="mt-1 hidden size-5 text-primary sm:block"
+                                            aria-hidden="true"
+                                        />
+                                    </li>
+                                ))}
+                            </ol>
+                        </div>
+                    </section>
+
                     <section
                         id="pricing"
-                        className="mx-auto w-full max-w-6xl scroll-mt-8 px-4 py-20 md:px-6"
+                        className="scroll-mt-8 border-t bg-card"
                     >
-                        <div className="mx-auto max-w-2xl space-y-3 text-center">
-                            <h2 className="text-3xl font-semibold tracking-tight">
-                                Pricing
-                            </h2>
-                            <p className="text-muted-foreground">
-                                Keep the free plan for as long as you like, or
-                                pay for each active employee, every month
-                                {plans[0]
-                                    ? `, in ${plans[0].currency}`
-                                    : ''}.{' '}
-                                {freeUntil
-                                    ? 'No credit card needed to get started.'
-                                    : `Every plan starts with a ${trialDays}-day free trial.`}
-                            </p>
-                        </div>
-                        {freeUntil && <FreePromotionBanner until={freeUntil} />}
-                        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-                            {plans.map((plan) => (
-                                <PlanCard
-                                    key={plan.value}
-                                    plan={plan}
-                                    featured={plan.value === 'professional'}
-                                    ctaHref={
-                                        customer
-                                            ? dashboard().url
-                                            : startFree.url
-                                    }
+                        <div className="mx-auto w-full max-w-6xl space-y-12 px-4 py-20 md:px-6">
+                            <div className="grid gap-6 lg:grid-cols-12 lg:items-end lg:gap-12">
+                                <SectionIntro
+                                    className="lg:col-span-6"
+                                    eyebrow="Pricing"
+                                    title="Free for small crews. Fair when you grow."
                                 />
-                            ))}
+                                <p className="max-w-md text-muted-foreground lg:col-span-5 lg:col-start-8">
+                                    Paid plans are per active person, per month
+                                    {plans[0]
+                                        ? `, in ${plans[0].currency}`
+                                        : ''}
+                                    . Deactivate someone and they stop counting.{' '}
+                                    {freeUntil
+                                        ? `Everything is free until ${formatDate(freeUntil, { month: 'long', day: 'numeric', year: 'numeric' })}.`
+                                        : `Every new workspace gets ${trialDays} days with everything unlocked first.`}
+                                </p>
+                            </div>
+                            <div className="grid gap-px overflow-hidden rounded-xl border bg-border sm:grid-cols-2 lg:grid-cols-4">
+                                {plans.map((plan) => (
+                                    <PlanColumn
+                                        key={plan.value}
+                                        plan={plan}
+                                        featured={plan.value === 'professional'}
+                                        ctaHref={
+                                            customer
+                                                ? dashboard().url
+                                                : startFree.url
+                                        }
+                                    />
+                                ))}
+                            </div>
                         </div>
                     </section>
 
                     <section className="bg-panel text-panel-foreground">
-                        <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-4 py-16 md:flex-row md:items-center md:px-6">
-                            <div className="space-y-2">
-                                <h2 className="text-2xl font-semibold tracking-tight text-warm-white">
-                                    Try it with your own team
-                                </h2>
-                                <p className="text-panel-foreground/70">
-                                    Free to start. No credit card and nothing to
-                                    install.
+                        <div className="mx-auto grid w-full max-w-6xl gap-8 px-4 py-20 md:px-6 lg:grid-cols-12 lg:items-end">
+                            <h2 className="font-display text-4xl leading-tight text-warm-white sm:text-5xl lg:col-span-8">
+                                Try it on next week's schedule.
+                            </h2>
+                            <div className="space-y-3 lg:col-span-4 lg:justify-self-end lg:text-right">
+                                <Button
+                                    size="lg"
+                                    className="bg-panel-primary text-panel-primary-foreground hover:bg-panel-primary/90"
+                                    asChild
+                                >
+                                    <Link
+                                        href={
+                                            customer ? dashboard() : startFree
+                                        }
+                                    >
+                                        {customer
+                                            ? 'Open dashboard'
+                                            : 'Start free'}
+                                        <ArrowRight />
+                                    </Link>
+                                </Button>
+                                <p className="text-sm text-panel-foreground/70">
+                                    No credit card, nothing to install.
                                 </p>
                             </div>
-                            <Button
-                                size="lg"
-                                className="bg-panel-primary text-panel-primary-foreground hover:bg-panel-primary/90"
-                                asChild
-                            >
-                                <Link href={customer ? dashboard() : startFree}>
-                                    {customer ? 'Open dashboard' : 'Start free'}
-                                </Link>
-                            </Button>
                         </div>
                     </section>
                 </main>
@@ -287,101 +372,142 @@ export default function Welcome({
 }
 
 /**
- * Makes clear there are two sides: the business that sets it up and pays, and the staff who use it
- * every shift. Both log in from the same page and Shiftora shows each what they need.
+ * A small uppercase label above a heading, with a short rule instead of a pill.
  */
-function WhoUsesIt() {
-    // Draft copy: rewrite in your own voice.
-    const audiences = [
-        {
-            icon: Briefcase,
-            title: 'For owners and managers',
-            points: [
-                'Add your team and send them an invite',
-                'Build the week and publish the schedule',
-                "See who's working right now",
-                'Approve timesheets and export for payroll',
-            ],
-        },
-        {
-            icon: Smartphone,
-            title: 'For your staff',
-            points: [
-                'Get an email invite, with nothing to install',
-                'Clock in from their phone or a shared tablet',
-                'See their upcoming shifts',
-                'Send in their week for approval',
-            ],
-        },
-    ];
-
+function Eyebrow({ children }: { children: ReactNode }) {
     return (
-        <section className="mx-auto w-full max-w-6xl px-4 pb-20 md:px-6">
-            <div className="grid gap-6 md:grid-cols-2">
-                {audiences.map((audience) => (
-                    <div
-                        key={audience.title}
-                        className="space-y-4 rounded-2xl border bg-card p-6"
-                    >
-                        <div className="flex items-center gap-3">
-                            <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
-                                <audience.icon
-                                    className="size-5"
-                                    aria-hidden="true"
-                                />
-                            </span>
-                            <h2 className="text-lg font-semibold">
-                                {audience.title}
-                            </h2>
-                        </div>
-                        <ul className="space-y-2 text-sm">
-                            {audience.points.map((point) => (
-                                <li
-                                    key={point}
-                                    className="flex items-start gap-2"
-                                >
-                                    <Check
-                                        className="mt-0.5 size-4 shrink-0 text-primary"
-                                        aria-hidden="true"
-                                    />
-                                    {point}
-                                </li>
-                            ))}
-                        </ul>
-                    </div>
-                ))}
-            </div>
-            <p className="mt-4 text-center text-sm text-muted-foreground">
-                Everyone logs in from the same page. Shiftora shows each person
-                what they need.
-            </p>
-        </section>
+        <p className="flex items-center gap-3 text-xs font-semibold tracking-[0.16em] text-primary uppercase">
+            <span className="h-px w-8 bg-primary" aria-hidden="true" />
+            {children}
+        </p>
     );
 }
 
-/**
- * The launch promotion, shown across the top of the pricing plans.
- */
-function FreePromotionBanner({ until }: { until: string }) {
+function SectionIntro({
+    eyebrow,
+    title,
+    children,
+    className,
+}: {
+    eyebrow: string;
+    title: string;
+    children?: ReactNode;
+    className?: string;
+}) {
     return (
-        <div className="mt-10 flex flex-col items-center gap-1 rounded-2xl bg-red-600 px-6 py-5 text-center text-white shadow-lg sm:flex-row sm:justify-center sm:gap-4">
-            <p className="text-2xl font-bold tracking-tight uppercase sm:text-3xl">
-                Free till {until.slice(0, 4)}
-            </p>
-            <p className="text-sm text-white/90 sm:text-base">
-                Every plan costs nothing until{' '}
-                {formatDate(until, {
-                    month: 'long',
-                    day: 'numeric',
-                    year: 'numeric',
-                })}
-                .
-            </p>
+        <div className={cn('space-y-4', className)}>
+            <Eyebrow>{eyebrow}</Eyebrow>
+            <h2 className="font-display text-4xl leading-[1.05] tracking-tight text-balance sm:text-5xl">
+                {title}
+            </h2>
+            {children && (
+                <p className="max-w-sm text-muted-foreground">{children}</p>
+            )}
         </div>
     );
 }
 
-function PlanCard({
+/**
+ * Words with a hand-drawn marker stroke under them.
+ */
+function HandUnderline({ children }: { children: ReactNode }) {
+    return (
+        <span className="relative inline-block whitespace-nowrap">
+            <span className="relative italic">{children}</span>
+            <svg
+                aria-hidden="true"
+                viewBox="0 0 220 14"
+                preserveAspectRatio="none"
+                className="absolute -bottom-1 left-0 h-3 w-full text-primary/70"
+            >
+                <path
+                    d="M3 9.6c31-4.1 66-6.9 104-6.7 38 .2 73 2.4 108 5.9"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3.2"
+                    strokeLinecap="round"
+                />
+            </svg>
+        </span>
+    );
+}
+
+/**
+ * The paper time card Shiftora replaces: a perforated card with a week of punches in and out,
+ * and an approval stamp. Paper stays paper-coloured in dark mode, like a card on a dark desk.
+ */
+function TimeCard() {
+    const punches = [
+        ['Mon', '8:58', '5:02', '7h 34m'],
+        ['Tue', '9:01', '5:00', '7h 29m'],
+        ['Wed', '—', '—', ''],
+        ['Thu', '8:55', '6:10', '8h 45m'],
+        ['Fri', '9:00', '5:31', '8h 01m'],
+    ];
+
+    return (
+        <figure
+            className="relative mx-auto max-w-sm rotate-[1.5deg] drop-shadow-[0_22px_28px_rgba(30,33,36,0.22)] lg:ml-auto"
+            aria-label="A paper time card for Maya Robinson with four days of punches, stamped approved"
+        >
+            <div className="bg-warm-white px-6 pt-8 pb-6 text-charcoal perforated-top">
+                <div className="flex items-baseline justify-between border-b-2 border-charcoal pb-3">
+                    <p className="font-display text-3xl">Time card</p>
+                    <p className="text-xs font-semibold tracking-[0.16em] uppercase">
+                        Week of Oct 26
+                    </p>
+                </div>
+                <p className="mt-3 text-sm">
+                    <span className="text-slate-grey">Name</span>{' '}
+                    <span className="font-display text-xl italic">
+                        Maya Robinson
+                    </span>
+                </p>
+                <table className="mt-4 w-full font-mono text-sm tabular">
+                    <thead>
+                        <tr className="text-left text-[11px] tracking-[0.14em] text-slate-grey uppercase">
+                            <th className="pb-2 font-semibold">Day</th>
+                            <th className="pb-2 font-semibold">In</th>
+                            <th className="pb-2 font-semibold">Out</th>
+                            <th className="pb-2 text-right font-semibold">
+                                Hours
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {punches.map(([day, clockIn, clockOut, hours]) => (
+                            <tr
+                                key={day}
+                                className="border-t border-dashed border-charcoal/20"
+                            >
+                                <td className="py-2 font-sans font-semibold">
+                                    {day}
+                                </td>
+                                <td className="py-2">{clockIn}</td>
+                                <td className="py-2">{clockOut}</td>
+                                <td className="py-2 text-right">{hours}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+                <div className="mt-2 flex items-baseline justify-between border-t-2 border-charcoal pt-3">
+                    <span className="text-xs font-semibold tracking-[0.16em] uppercase">
+                        Total
+                    </span>
+                    <span className="font-display text-3xl">31h 49m</span>
+                </div>
+            </div>
+            <span
+                className="absolute top-[55%] right-8 rotate-[-11deg] rounded-md border-[3px] border-forest/80 px-3 py-1 text-base font-bold tracking-[0.24em] text-forest/80 uppercase mix-blend-multiply"
+                aria-hidden="true"
+            >
+                Approved
+            </span>
+        </figure>
+    );
+}
+
+function PlanColumn({
     plan,
     featured,
     ctaHref,
@@ -395,37 +521,33 @@ function PlanCard({
     return (
         <div
             className={cn(
-                'relative flex flex-col gap-6 rounded-2xl border bg-card p-6',
-                featured && 'border-primary shadow-lg ring-1 ring-primary',
+                'flex flex-col gap-6 bg-background p-6',
+                featured && 'shadow-[inset_0_3px_0_var(--color-primary)]',
             )}
         >
             <div className="space-y-2">
-                <h3 className="text-lg font-semibold">{plan.name}</h3>
-                <p className="min-h-10 text-sm text-muted-foreground">
+                <h3 className="font-semibold">{plan.name}</h3>
+                <p className="text-sm text-muted-foreground lg:min-h-[3.75rem]">
                     {plan.description}
                 </p>
             </div>
-            <div className="flex flex-wrap items-baseline gap-x-1.5">
-                <span className="text-4xl font-semibold tracking-tight tabular">
+            <div className="space-y-1">
+                <p className="font-display text-5xl leading-none tabular">
                     {isFree
                         ? 'Free'
                         : formatPrice(
                               plan.price_per_employee_cents,
                               plan.currency,
                           )}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                    {isFree ? 'for good' : '/ employee / month'}
-                </span>
+                </p>
+                <p className="text-sm text-muted-foreground">
+                    {isFree ? 'for good' : 'per person, per month'}
+                </p>
             </div>
-            <p className="text-sm text-muted-foreground">
+            <p className="text-sm font-medium">
                 {plan.employee_limit
-                    ? `Up to ${plan.employee_limit} employees`
-                    : 'Unlimited employees'}
-                {' · '}
-                {plan.location_limit === 1
-                    ? '1 location'
-                    : 'Unlimited locations'}
+                    ? `Up to ${plan.employee_limit} people · ${plan.location_limit === 1 ? '1 location' : 'any number of locations'}`
+                    : 'No limit on people or locations'}
             </p>
             <ul className="flex-1 space-y-2.5 text-sm">
                 {plan.features.map((feature) => (
@@ -443,89 +565,6 @@ function PlanCard({
                     {isFree ? 'Start free' : 'Try it free'}
                 </Link>
             </Button>
-        </div>
-    );
-}
-
-/**
- * A static illustration of the product: a live time clock beside a mini schedule.
- */
-function ProductPreview() {
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
-    const rows = [
-        { name: 'Maya R.', color: '#2D6A4F', shifts: [0, 1, 3, 4] },
-        { name: 'Jordan P.', color: '#3B6E8F', shifts: [1, 2, 3] },
-        { name: 'Sam K.', color: '#8A5A44', shifts: [0, 2, 4] },
-    ];
-
-    return (
-        <div className="relative" aria-hidden="true">
-            <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-accent/70 blur-2xl" />
-            <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-xl">
-                <div className="flex items-center justify-between rounded-xl bg-panel p-4 text-panel-foreground">
-                    <div>
-                        <p className="text-xs text-panel-foreground/60">
-                            Clocked in since 8:58 AM
-                        </p>
-                        <p className="text-3xl font-semibold tabular">
-                            4:12:36
-                        </p>
-                    </div>
-                    <span className="rounded-lg bg-panel-primary px-4 py-2 text-sm font-medium text-panel-primary-foreground">
-                        Clock out
-                    </span>
-                </div>
-                <div className="rounded-xl border">
-                    <div className="grid grid-cols-[5.5rem_repeat(5,1fr)] border-b text-xs text-muted-foreground">
-                        <span className="p-2" />
-                        {days.map((day) => (
-                            <span key={day} className="p-2 text-center">
-                                {day}
-                            </span>
-                        ))}
-                    </div>
-                    {rows.map((row) => (
-                        <div
-                            key={row.name}
-                            className="grid grid-cols-[5.5rem_repeat(5,1fr)] items-center border-b last:border-b-0"
-                        >
-                            <span className="truncate p-2 text-xs font-medium">
-                                {row.name}
-                            </span>
-                            {days.map((day, index) => (
-                                <span key={day} className="p-1">
-                                    {row.shifts.includes(index) && (
-                                        <span
-                                            className="block rounded-md border-l-[3px] bg-muted px-1.5 py-1 text-[10px] leading-tight tabular"
-                                            style={{
-                                                borderLeftColor: row.color,
-                                            }}
-                                        >
-                                            9–5
-                                        </span>
-                                    )}
-                                </span>
-                            ))}
-                        </div>
-                    ))}
-                </div>
-                <div className="grid grid-cols-3 gap-3 text-center">
-                    {[
-                        ['38h 20m', 'This week'],
-                        ['2h 10m', 'Overtime'],
-                        ['3', 'To approve'],
-                    ].map(([value, label]) => (
-                        <div key={label} className="rounded-lg bg-muted p-2">
-                            <p className="text-sm font-semibold tabular">
-                                {value}
-                            </p>
-                            <p className="text-[11px] text-muted-foreground">
-                                {label}
-                            </p>
-                        </div>
-                    ))}
-                </div>
-            </div>
         </div>
     );
 }

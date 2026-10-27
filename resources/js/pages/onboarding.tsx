@@ -55,9 +55,7 @@ export default function Onboarding({
                 <header className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6">
                     <div className="flex items-center gap-2">
                         <AppLogoIcon className="size-7" />
-                        <span className="text-lg font-semibold tracking-tight">
-                            Shiftora
-                        </span>
+                        <span className="font-display text-2xl">Shiftora</span>
                     </div>
                     {isGuest ? (
                         <Link
@@ -77,26 +75,41 @@ export default function Onboarding({
                     )}
                 </header>
 
-                <main className="flex flex-1 items-start justify-center px-4 pt-6 pb-16 sm:items-center sm:px-6">
-                    <div className="w-full max-w-xl space-y-8">
-                        <div className="space-y-3 text-center">
-                            <AppLogoIcon className="mx-auto size-12" />
-                            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                                {isGuest
-                                    ? 'Set up your workspace'
-                                    : 'Set up your organization'}
-                            </h1>
-                            <p className="mx-auto max-w-md text-sm text-muted-foreground">
-                                {isGuest &&
-                                    'No sign-up needed: add your team and try it for real. '}
-                                Everything is unlocked while you try it, and a
-                                free plan keeps going after.{' '}
-                                {freeUntil
-                                    ? `Free until ${formatDate(freeUntil, { month: 'long', day: 'numeric', year: 'numeric' })}, no card needed.`
-                                    : `Free for ${trialDays} days, no card needed.`}
-                            </p>
-                        </div>
+                <main className="mx-auto grid w-full max-w-5xl flex-1 gap-10 px-4 pt-6 pb-16 sm:px-6 lg:grid-cols-12 lg:items-center lg:gap-16">
+                    <div className="space-y-6 lg:col-span-5">
+                        <h1 className="font-display text-4xl leading-[1.05] tracking-tight sm:text-5xl">
+                            {isGuest
+                                ? 'Set up your workspace'
+                                : 'Set up your organization'}
+                        </h1>
+                        <p className="max-w-sm text-muted-foreground">
+                            {isGuest &&
+                                'No sign-up needed: add your team and try it for real. '}
+                            Everything is unlocked while you try it, and a free
+                            plan keeps going after.{' '}
+                            {freeUntil
+                                ? `Free until ${formatDate(freeUntil, { month: 'long', day: 'numeric', year: 'numeric' })}, no card needed.`
+                                : `Free for ${trialDays} days, no card needed.`}
+                        </p>
+                        <ol className="space-y-3 border-l pl-5 text-sm">
+                            {[
+                                'Add your team. They get an email invite.',
+                                'Build the week and publish it.',
+                                "Watch who's on the clock, then approve timesheets.",
+                            ].map((step, index) => (
+                                <li key={step} className="flex gap-3">
+                                    <span className="font-display text-lg leading-5 text-primary">
+                                        {index + 1}
+                                    </span>
+                                    <span className="text-muted-foreground">
+                                        {step}
+                                    </span>
+                                </li>
+                            ))}
+                        </ol>
+                    </div>
 
+                    <div className="lg:col-span-7">
                         <Form
                             {...(isGuest
                                 ? startWorkspace.form()

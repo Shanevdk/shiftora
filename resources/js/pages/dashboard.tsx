@@ -225,8 +225,8 @@ export default function Dashboard({
                             {upcomingShifts.length === 0 ? (
                                 <EmptyState
                                     icon={CalendarDays}
-                                    title="No upcoming shifts"
-                                    description="When your manager publishes the schedule, your shifts will show up here."
+                                    title="No shifts coming up"
+                                    description="Once your manager publishes the schedule, your next shifts land here."
                                 />
                             ) : (
                                 <ul className="divide-y">
@@ -428,8 +428,8 @@ function TeamSection({
                         {team.clockedIn.length === 0 ? (
                             <EmptyState
                                 icon={Users}
-                                title="Nobody is clocked in"
-                                description="People appear here as soon as they clock in."
+                                title="Nobody's on the clock"
+                                description="The moment someone clocks in, they show up here with a running timer."
                             />
                         ) : (
                             <ul className="divide-y">
@@ -478,8 +478,8 @@ function TeamSection({
                             {team.todaysShifts.length === 0 ? (
                                 <EmptyState
                                     icon={CalendarDays}
-                                    title="No shifts today"
-                                    description="Build next week's schedule from the Schedule page."
+                                    title="Nothing scheduled today"
+                                    description="A quiet one. Next week's schedule is a few drags away."
                                     action={
                                         <Button
                                             size="sm"

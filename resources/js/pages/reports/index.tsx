@@ -350,8 +350,8 @@ function DailySection({ daily }: { daily: DailyHours[] }) {
             {!hasData ? (
                 <EmptyState
                     icon={BarChart3}
-                    title="No hours in this range"
-                    description="Pick another date range, or check back once your team has clocked in."
+                    title="No hours in these dates"
+                    description="Try a wider date range, or come back once people have clocked in."
                 />
             ) : view === 'chart' ? (
                 <DailyHoursChart days={daily} />
@@ -457,8 +457,8 @@ function EmployeeTable({
             {employees.length === 0 ? (
                 <EmptyState
                     icon={Clock}
-                    title="No time recorded"
-                    description="Nobody clocked any time in this date range."
+                    title="Nothing to add up"
+                    description="Nobody clocked any time between these dates."
                 />
             ) : (
                 <div className="rounded-xl border bg-card shadow-xs">

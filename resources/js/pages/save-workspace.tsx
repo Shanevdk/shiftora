@@ -31,7 +31,7 @@ export default function SaveWorkspace({
             <Head title="Save your workspace" />
             <PageContainer className="max-w-lg">
                 <div className="space-y-2">
-                    <h1 className="text-2xl font-semibold tracking-tight">
+                    <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
                         Save your workspace
                     </h1>
                     <p className="text-sm text-muted-foreground">

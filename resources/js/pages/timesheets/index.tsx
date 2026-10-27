@@ -137,8 +137,8 @@ export default function TimesheetsIndex({
                 {rows.length === 0 ? (
                     <EmptyState
                         icon={Users}
-                        title="No employees yet"
-                        description="Once your team clocks in, their weekly hours show up here."
+                        title="No timesheets yet"
+                        description="Once your team clocks in, their weeks show up here, ready to check."
                     />
                 ) : (
                     <div className="flex flex-col gap-3">
@@ -174,8 +174,8 @@ export default function TimesheetsIndex({
                         {visibleRows.length === 0 ? (
                             <EmptyState
                                 icon={Inbox}
-                                title="Nothing awaiting approval"
-                                description="Submitted timesheets for this week will appear here."
+                                title="You're all caught up"
+                                description="Timesheets sent in for this week will wait for you here."
                             />
                         ) : (
                             <div className="rounded-xl border bg-card shadow-xs">

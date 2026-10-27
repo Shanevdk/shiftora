@@ -398,7 +398,8 @@ export default function TimeClock({
                         </div>
                         {todayEntries.length === 0 ? (
                             <p className="px-4 py-6 text-sm text-muted-foreground">
-                                No time recorded yet today.
+                                Nothing yet today. Your first punch shows up
+                                here.
                             </p>
                         ) : (
                             <ul className="divide-y">

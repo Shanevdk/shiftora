@@ -187,7 +187,7 @@ export default function LiveDemoFrame() {
                         {isCustomer ? (
                             <>
                                 <div className="max-w-md space-y-2">
-                                    <h3 className="text-xl font-semibold">
+                                    <h3 className="font-display text-3xl">
                                         You're already signed in
                                     </h3>
                                     <p className="text-muted-foreground">
@@ -205,7 +205,7 @@ export default function LiveDemoFrame() {
                         ) : (
                             <>
                                 <div className="max-w-lg space-y-2">
-                                    <h3 className="text-xl font-semibold">
+                                    <h3 className="font-display text-3xl">
                                         The real app, ready to explore
                                     </h3>
                                     <p className="text-muted-foreground">
@@ -223,7 +223,7 @@ export default function LiveDemoFrame() {
                                 >
                                     {processing ? <Spinner /> : <Play />}
                                     {processing
-                                        ? 'Setting up your workspace…'
+                                        ? 'Brewing a fresh pot of demo data…'
                                         : 'Launch the live demo'}
                                 </Button>
                                 {launchError !== null && (

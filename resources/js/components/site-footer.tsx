@@ -16,7 +16,9 @@ export default function SiteFooter() {
                     Cookie policy
                 </Link>
             </nav>
-            <p>Work smarter. Shift better.</p>
+            <p className="font-display text-base text-foreground italic">
+                Work smarter. Shift better.
+            </p>
         </footer>
     );
 }

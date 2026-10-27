@@ -13,6 +13,10 @@
         'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol',
         'Noto Color Emoji';
 
+    /* Headlines: a warm display serif against the sans body, for real size and weight contrast. */
+    --font-display:
+        'Instrument Serif', ui-serif, Georgia, 'Times New Roman', serif;
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -193,4 +197,13 @@
 
 @utility tabular {
     font-variant-numeric: tabular-nums;
+}
+
+/*
+ * The perforated top edge of a paper time card: a row of half-circle notches cut out with a
+ * repeating mask. Put drop shadows on a wrapper, since the mask clips the element's own.
+ */
+@utility perforated-top {
+    mask: radial-gradient(circle at 50% 0, transparent 5px, #000 5.5px) 0 0 /
+        18px 100% repeat-x;
 }

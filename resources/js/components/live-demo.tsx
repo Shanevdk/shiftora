@@ -63,7 +63,7 @@ export default function LiveDemo({ className }: { className?: string }) {
                 ) : (
                     <Play className="size-5" />
                 )}
-                {isLaunching ? 'Setting up your demo…' : 'Try the live demo'}
+                {isLaunching ? 'Brewing your demo…' : 'Try the live demo'}
             </Button>
             {launchError !== null && (
                 <p className="text-sm text-destructive" role="alert">
