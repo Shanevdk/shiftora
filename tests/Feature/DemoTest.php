@@ -122,3 +122,9 @@ test('the database seeder creates the documented sample logins', function () {
         ->and($owner->currentOrganization->is_demo)->toBeFalse()
         ->and($owner->currentRole())->toBe(Role::Owner);
 });
+
+test('pages can be shown in the landing page demo frame but not framed by other sites', function () {
+    $this->get(route('home'))->assertHeader('Content-Security-Policy', "frame-ancestors 'self'");
+    $this->postJson(route('demo.store'));
+    $this->get(route('dashboard'))->assertHeader('Content-Security-Policy', "frame-ancestors 'self'");
+});

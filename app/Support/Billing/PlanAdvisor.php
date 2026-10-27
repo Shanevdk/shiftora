@@ -21,7 +21,7 @@ class PlanAdvisor
         $usedFeatures = self::usedFeatures($organization);
         $activeEmployees = $organization->activeEmployeeCount();
 
-        foreach (Plan::cases() as $plan) {
+        foreach (Plan::paid() as $plan) {
             if (self::seatsFit($plan, $activeEmployees) && self::missingFeatures($plan, $usedFeatures) === []) {
                 return $plan;
             }

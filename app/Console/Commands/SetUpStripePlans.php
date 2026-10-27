@@ -31,7 +31,7 @@ class SetUpStripePlans extends Command
         $stripe = Cashier::stripe();
         $lines = [];
 
-        foreach (Plan::cases() as $plan) {
+        foreach (Plan::paid() as $plan) {
             $existing = $stripe->prices->search([
                 'query' => "lookup_key:'shiftora_{$plan->value}_monthly'",
             ])->data[0] ?? null;

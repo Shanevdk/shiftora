@@ -15,6 +15,7 @@ import {
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
 import { formatDate } from '@/lib/time';
+import { timeZoneChoices } from '@/lib/timezones';
 import { login, logout } from '@/routes';
 import { store as startWorkspace } from '@/routes/start';
 
@@ -29,23 +30,21 @@ function browserTimeZone(): string {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
 }
 
-function timeZoneOptions(current: string): string[] {
-    const zones = Intl.supportedValuesOf('timeZone');
-
-    return zones.includes(current) ? zones : [current, ...zones];
-}
-
 export default function Onboarding({
     trialDays,
     freeUntil,
     isGuest = false,
 }: Props) {
+    const [detectedTimezone, setDetectedTimezone] = useState('');
     const [timezone, setTimezone] = useState('UTC');
-    const timeZones = timeZoneOptions(timezone);
+    const timeZones = timeZoneChoices(detectedTimezone);
 
     /** Default to the browser's timezone once mounted, so server and client renders match. */
     useEffect(() => {
-        setTimezone(browserTimeZone());
+        const zone = browserTimeZone();
+
+        setDetectedTimezone(zone);
+        setTimezone(zone);
     }, []);
 
     return (
@@ -90,7 +89,8 @@ export default function Onboarding({
                             <p className="mx-auto max-w-md text-sm text-muted-foreground">
                                 {isGuest &&
                                     'No sign-up needed: add your team and try it for real. '}
-                                Everything is unlocked while you try it.{' '}
+                                Everything is unlocked while you try it, and a
+                                free plan keeps going after.{' '}
                                 {freeUntil
                                     ? `Free until ${formatDate(freeUntil, { month: 'long', day: 'numeric', year: 'numeric' })}, no card needed.`
                                     : `Free for ${trialDays} days, no card needed.`}
@@ -169,13 +169,10 @@ export default function Onboarding({
                                             <SelectContent className="max-h-72">
                                                 {timeZones.map((zone) => (
                                                     <SelectItem
-                                                        key={zone}
-                                                        value={zone}
+                                                        key={zone.value}
+                                                        value={zone.value}
                                                     >
-                                                        {zone.replaceAll(
-                                                            '_',
-                                                            ' ',
-                                                        )}
+                                                        {zone.label}
                                                     </SelectItem>
                                                 ))}
                                             </SelectContent>

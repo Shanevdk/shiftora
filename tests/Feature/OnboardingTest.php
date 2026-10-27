@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\Feature;
+use App\Enums\Plan;
 use App\Enums\Role;
 use App\Models\Organization;
 use App\Models\User;
@@ -23,7 +24,7 @@ test('a new user creates an organization on a free trial with every feature unlo
         ->timezone->toBe('America/Toronto')
         ->and($lockedFeatures)->toBeEmpty()
         ->and($organization->onGenericTrial())->toBeTrue()
-        ->and($organization->trial_ends_at->isSameDay(now()->addDays(2)))->toBeTrue()
+        ->and($organization->trial_ends_at->isSameDay(now()->addDays(90)))->toBeTrue()
         ->and($organization->locations()->count())->toBe(1);
 
     $owner = $organization->employees()->sole();
@@ -36,9 +37,9 @@ test('a new user creates an organization on a free trial with every feature unlo
         ->and($user->refresh()->current_organization_id)->toBe($organization->id);
 });
 
-test('during the promotion a new workspace stays open without a card until the promotion ends, then turns read-only', function () {
+test('during the promotion a new workspace keeps everything without a card until the promotion ends, then moves to the free plan', function () {
     $this->freezeSecond();
-    config(['shiftora.free_until' => now()->addMonths(2)->toDateString()]);
+    config(['shiftora.free_until' => now()->addMonths(6)->toDateString()]);
 
     $this->actingAs(User::factory()->create())
         ->post(route('onboarding.store'), ['name' => 'Northwind Coffee', 'timezone' => 'UTC'])
@@ -52,7 +53,7 @@ test('during the promotion a new workspace stays open without a card until the p
     $this->travelTo(Organization::freeUntil()->addMinute());
     $this->get(route('dashboard'))->assertOk();
 
-    expect(Organization::query()->sole()->isReadOnly())->toBeTrue();
+    expect(Organization::query()->sole()->activePlan())->toBe(Plan::Free);
 });
 
 test('a promotion ending sooner than the regular trial does not shorten it', function () {
@@ -81,6 +82,25 @@ test('existing workspaces, including lapsed ones, are kept open until the promot
         ->and($lapsed->trial_ends_at->equalTo(Organization::freeUntil()))->toBeTrue()
         ->and($trialing->refresh()->trial_ends_at->equalTo(Organization::freeUntil()))->toBeTrue()
         ->and($longTrial->refresh()->trial_ends_at->equalTo(now()->addYear()))->toBeTrue();
+});
+
+test('existing workspaces get the full 90-day trial from when they signed up, without any trial getting shorter', function () {
+    $this->travelTo('2026-10-27 12:00:00');
+
+    $onPromotion = Organization::factory()->create([
+        'created_at' => '2026-10-10 09:00:00',
+        'trial_ends_at' => '2027-01-01 00:00:00',
+        'trial_ending_notified_at' => '2026-10-26 14:00:00',
+    ]);
+    $longTrial = Organization::factory()->create(['created_at' => '2026-10-10 09:00:00', 'trial_ends_at' => '2027-06-01 00:00:00']);
+    $longAgo = Organization::factory()->trialExpired()->create(['created_at' => '2026-06-01 09:00:00']);
+
+    (require database_path('migrations/2026_10_27_122421_give_existing_workspaces_the_full_ninety_day_trial.php'))->up();
+
+    expect($onPromotion->refresh()->trial_ends_at->toDateTimeString())->toBe('2027-01-08 09:00:00')
+        ->and($onPromotion->trial_ending_notified_at)->toBeNull()
+        ->and($longTrial->refresh()->trial_ends_at->toDateTimeString())->toBe('2027-06-01 00:00:00')
+        ->and($longAgo->refresh()->trial_ends_at->toDateTimeString())->toBe('2026-10-26 12:00:00');
 });
 
 test('onboarding validates the organization details', function () {

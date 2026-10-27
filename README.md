@@ -14,7 +14,7 @@ Plans, prices, seat limits and features are all defined in `config/shiftora.php`
 | Professional | $7 / employee / month  | 100       | Adds shift scheduling, drag-and-drop, approvals, reports, CSV export, overtime rules |
 | Business     | $10 / employee / month | Unlimited | Adds geofenced clock-in, audit log, multiple locations, priority support             |
 
-Every new organization gets a 14-day trial with no card required.
+Every new organization gets a 90-day trial of every feature with no card required. Subscribing during the trial carries the remaining days over, so the card is first charged when the trial ends.
 
 ## Local development
 

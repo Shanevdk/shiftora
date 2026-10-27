@@ -17,6 +17,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { timeZoneChoices } from '@/lib/timezones';
 import { edit } from '@/routes/organization';
 
 type Props = {
@@ -47,12 +48,6 @@ const weekdays = [
     'Saturday',
 ];
 
-function timeZoneOptions(current: string): string[] {
-    const zones = Intl.supportedValuesOf('timeZone');
-
-    return zones.includes(current) ? zones : [current, ...zones];
-}
-
 export default function OrganizationSettings({
     settings,
     features,
@@ -66,7 +61,7 @@ export default function OrganizationSettings({
     const [geofencingEnabled, setGeofencingEnabled] = useState(
         settings.geofencing_enabled,
     );
-    const [timeZones] = useState(() => timeZoneOptions(settings.timezone));
+    const [timeZones] = useState(() => timeZoneChoices(settings.timezone));
 
     return (
         <>
@@ -123,10 +118,10 @@ export default function OrganizationSettings({
                                         <SelectContent className="max-h-72">
                                             {timeZones.map((zone) => (
                                                 <SelectItem
-                                                    key={zone}
-                                                    value={zone}
+                                                    key={zone.value}
+                                                    value={zone.value}
                                                 >
-                                                    {zone.replaceAll('_', ' ')}
+                                                    {zone.label}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>

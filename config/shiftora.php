@@ -13,18 +13,38 @@
 
 return [
 
-    'trial_days' => (int) env('SHIFTORA_TRIAL_DAYS', 2),
-
     /*
-    | New subscriptions collect a card but are not charged until this date.
-    | Leave it empty to turn the promotion off.
+    | Every feature is free, with no card, for this long. Subscribing during the
+    | trial carries the days that are left over, so the card is first charged
+    | when the trial ends.
     */
 
-    'free_until' => env('SHIFTORA_FREE_UNTIL', '2027-01-01'),
+    'trial_days' => (int) env('SHIFTORA_TRIAL_DAYS', 90),
+
+    /*
+    | A launch promotion: new subscriptions collect a card but are not charged
+    | until this date. Empty turns it off, so payments start after the trial.
+    */
+
+    'free_until' => env('SHIFTORA_FREE_UNTIL'),
 
     'subscription_type' => 'default',
 
     'plans' => [
+
+        // Where a workspace lands after its trial if nobody pays: free for good, for a small crew.
+        'free' => [
+            'name' => 'Free',
+            'description' => 'The time clock and timesheets for a small crew, free for good.',
+            'price_per_employee_cents' => 0,
+            'stripe_price' => null,
+            'employee_limit' => 5,
+            'location_limit' => 1,
+            'features' => [
+                'time_clock',
+                'timesheets',
+            ],
+        ],
 
         'starter' => [
             'name' => 'Starter',

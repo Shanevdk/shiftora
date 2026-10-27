@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AllowSameOriginFraming;
 use App\Http\Middleware\EnsureActiveSubscription;
 use App\Http\Middleware\EnsureFeature;
 use App\Http\Middleware\EnsureNotDemo;
@@ -33,6 +34,7 @@ return Application::configure(basePath: dirname(__DIR__))
             RestrictToKiosk::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            AllowSameOriginFraming::class,
         ]);
 
         $middleware->alias([

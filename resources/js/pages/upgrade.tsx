@@ -4,10 +4,11 @@ import PageContainer from '@/components/page-container';
 import { Button } from '@/components/ui/button';
 import { useWorkspace } from '@/hooks/use-workspace';
 import { edit as billing } from '@/routes/billing';
+import { show as continueWithShiftora } from '@/routes/continue';
 
 /**
- * Shown in place of a page whose feature the organization's paid plan doesn't include.
- * Trials include everything, so only paying customers on a smaller plan see this.
+ * Shown in place of a page whose feature the organization's plan doesn't include.
+ * Trials include everything, so this is for the free plan and for paying customers on a smaller plan.
  */
 export default function Upgrade({
     feature,
@@ -46,7 +47,13 @@ export default function Upgrade({
 
                     {canManageBilling ? (
                         <Button size="lg" className="w-full" asChild>
-                            <Link href={billing()}>
+                            <Link
+                                href={
+                                    subscription?.status === 'active'
+                                        ? billing()
+                                        : continueWithShiftora()
+                                }
+                            >
                                 <Sparkles />
                                 Switch to {requiredPlan}
                             </Link>

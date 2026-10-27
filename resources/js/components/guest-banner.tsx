@@ -13,14 +13,14 @@ export function GuestBanner() {
     }
 
     return (
-        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-sidebar px-4 py-2 text-center text-sm text-sidebar-foreground">
+        <div className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1 bg-panel px-4 py-2 text-center text-sm text-panel-foreground">
             <span>
                 You're using Shiftora without an account. Save your workspace to
                 keep it; unsaved ones are deleted after a day.
             </span>
             <Link
                 href={saveWorkspace()}
-                className="inline-flex items-center gap-1 font-medium text-sidebar-primary underline-offset-4 hover:underline"
+                className="inline-flex items-center gap-1 font-medium text-panel-primary underline-offset-4 hover:underline"
             >
                 Save my workspace
                 <ArrowRight className="size-3.5" aria-hidden="true" />

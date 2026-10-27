@@ -2,6 +2,7 @@
 
 namespace App\Notifications;
 
+use App\Enums\Plan;
 use App\Models\Organization;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -30,7 +31,9 @@ class TrialEnding extends Notification implements ShouldQueue
                 'organization' => $this->organization->name,
                 'date' => $this->organization->trial_ends_at?->format('F j'),
             ]))
-            ->line(__('If you don\'t, nothing is deleted. Your workspace turns read-only until you continue.'))
+            ->line(__('If you don\'t, you move to the free plan: the time clock and timesheets for up to :limit people. Nothing is deleted.', [
+                'limit' => Plan::Free->employeeLimit(),
+            ]))
             ->action(__('Continue with Shiftora'), route('continue.show'));
     }
 

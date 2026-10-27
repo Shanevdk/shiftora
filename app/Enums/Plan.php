@@ -4,9 +4,20 @@ namespace App\Enums;
 
 enum Plan: string
 {
+    case Free = 'free';
     case Starter = 'starter';
     case Professional = 'professional';
     case Business = 'business';
+
+    /**
+     * The plans that can be bought, cheapest first.
+     *
+     * @return list<self>
+     */
+    public static function paid(): array
+    {
+        return array_values(array_filter(self::cases(), fn (self $plan): bool => $plan !== self::Free));
+    }
 
     /**
      * Find the plan that is billed with the given Stripe price.

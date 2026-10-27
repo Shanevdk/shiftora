@@ -39,6 +39,9 @@ type BillingStatus =
     | 'free'
     | 'canceled'
     | 'past_due'
+    /** Using Shiftora for free after the trial. */
+    | 'free_plan'
+    /** On the free plan with more active people than it covers, so read-only. */
     | 'inactive';
 
 type BillingPlan = Plan & { available: boolean };
@@ -52,11 +55,14 @@ type Billing = {
     trial_ends_at: string | null;
     trial_days_remaining: number | null;
     free_until: string | null;
+    /** When the card is first charged, while a trial (or one carried into a new subscription) runs. */
+    first_charge_at: string | null;
     ends_at: string | null;
     quantity: number | null;
     card_last_four: string | null;
     active_employee_count: number;
     has_payment_issue: boolean;
+    free_employee_limit: number;
 };
 
 type Props = {
@@ -82,6 +88,19 @@ function formatFreeUntil(
     return formatDateTimeDay(iso, 'UTC', options);
 }
 
+/**
+ * The date the card is first charged, or null when there's nothing free left before it is.
+ */
+function formatFirstCharge(billing: Billing, timeZone: string): string | null {
+    if (billing.free_until) {
+        return formatFreeUntil(billing.free_until);
+    }
+
+    return billing.first_charge_at
+        ? formatDateTimeDay(billing.first_charge_at, timeZone, longDate)
+        : null;
+}
+
 export default function BillingSettings({
     plans,
     billing,
@@ -99,7 +118,9 @@ export default function BillingSettings({
         plans.find((plan) => plan.value === billing.recommended_plan);
     const seats = Math.max(1, billing.active_employee_count);
     const freeUntil = billing.free_until;
-    const isFreeNow = freeUntil !== null && billing.status !== 'inactive';
+    const firstCharge = formatFirstCharge(billing, timeZone);
+    const isOnFreePlan = ['free_plan', 'inactive'].includes(billing.status);
+    const isFreeNow = isOnFreePlan || firstCharge !== null;
 
     return (
         <>
@@ -112,12 +133,12 @@ export default function BillingSettings({
                     <Eye aria-hidden="true" className="text-warning" />
                     <AlertTitle>Your workspace is read-only</AlertTitle>
                     <AlertDescription>
-                        {billing.ends_at
-                            ? 'Your subscription has ended.'
-                            : 'Your free trial has ended.'}{' '}
+                        {billing.active_employee_count} people are active and
+                        the free plan covers {billing.free_employee_limit}.
+                        Everything you set up is still here.{' '}
                         {canManage
-                            ? 'Everything you set up is still here. Continue with a plan below to keep your data going.'
-                            : 'Everything is still here. Ask your account owner to continue with a plan to keep it going.'}
+                            ? 'Deactivate people on the Team page, or continue with a paid plan below.'
+                            : 'Ask your account owner to sort out the plan.'}
                     </AlertDescription>
                 </Alert>
             )}
@@ -152,8 +173,8 @@ export default function BillingSettings({
                             </p>
                             <div className="flex flex-wrap items-center gap-2">
                                 <p className="text-xl font-semibold tracking-tight">
-                                    {billing.status === 'inactive'
-                                        ? 'No active plan'
+                                    {isOnFreePlan
+                                        ? 'Free'
                                         : billing.status === 'trial'
                                           ? 'Everything included'
                                           : (currentPlan?.name ??
@@ -230,9 +251,11 @@ export default function BillingSettings({
                             <dd className="text-xs text-muted-foreground">
                                 {!estimatePlan
                                     ? 'Choose a plan to see an estimate'
-                                    : isFreeNow && freeUntil
-                                      ? `Then ${formatPrice(estimatePlan.price_per_employee_cents * seats, estimatePlan.currency)} a month on ${estimatePlan.name} from ${formatFreeUntil(freeUntil)}`
-                                      : `${estimatePlan.name}: ${formatPrice(estimatePlan.price_per_employee_cents, estimatePlan.currency)} × ${seats} ${seats === 1 ? 'employee' : 'employees'}`}
+                                    : isOnFreePlan
+                                      ? `On the free plan. ${estimatePlan.name} would be ${formatPrice(estimatePlan.price_per_employee_cents * seats, estimatePlan.currency)} a month.`
+                                      : firstCharge
+                                        ? `Then ${formatPrice(estimatePlan.price_per_employee_cents * seats, estimatePlan.currency)} a month on ${estimatePlan.name} from ${firstCharge}`
+                                        : `${estimatePlan.name}: ${formatPrice(estimatePlan.price_per_employee_cents, estimatePlan.currency)} × ${seats} ${seats === 1 ? 'employee' : 'employees'}`}
                             </dd>
                         </div>
                         <div className="space-y-1 p-4 sm:p-6">
@@ -259,8 +282,8 @@ export default function BillingSettings({
                                 )}
                             </dd>
                             <dd className="text-xs text-muted-foreground">
-                                {freeUntil
-                                    ? `Not charged until ${formatFreeUntil(freeUntil)}`
+                                {firstCharge
+                                    ? `Not charged until ${firstCharge}`
                                     : 'Billed monthly per active employee'}
                             </dd>
                         </div>
@@ -345,9 +368,9 @@ function StatusBadge({ billing }: { billing: Billing }) {
             return (
                 <Badge className="bg-primary text-primary-foreground">
                     <Gift aria-hidden="true" />
-                    Free
-                    {billing.free_until &&
-                        ` till ${formatFreeUntil(billing.free_until, { year: 'numeric' })}`}
+                    {billing.free_until
+                        ? `Free till ${formatFreeUntil(billing.free_until, { year: 'numeric' })}`
+                        : 'Free trial'}
                 </Badge>
             );
         case 'active':
@@ -366,6 +389,8 @@ function StatusBadge({ billing }: { billing: Billing }) {
                     Past due
                 </Badge>
             );
+        case 'free_plan':
+            return <Badge variant="outline">Free plan</Badge>;
         default:
             return (
                 <Badge className="border-transparent bg-warning/15 text-warning">
@@ -384,6 +409,7 @@ function StatusDetail({
     timeZone: string;
 }) {
     let detail: string | null = null;
+    const firstCharge = formatFirstCharge(billing, timeZone);
 
     if (billing.status === 'trial') {
         const days = billing.trial_days_remaining ?? 0;
@@ -392,16 +418,16 @@ function StatusDetail({
                 ? 'Your trial ends today'
                 : `${days} ${days === 1 ? 'day' : 'days'} left in your trial`;
 
-        const nextStep = billing.free_until
-            ? `Continue with a plan before then and nothing changes for your team. You won't be charged until ${formatFreeUntil(billing.free_until)}.`
+        const nextStep = firstCharge
+            ? `Continue with a plan before then and nothing changes for your team. You won't be charged until ${firstCharge}.`
             : 'Continue with a plan before then and nothing changes for your team.';
 
         detail = billing.trial_ends_at
             ? `${remaining} (ends ${formatDateTimeDay(billing.trial_ends_at, timeZone, longDate)}). ${nextStep}`
             : remaining;
     } else if (billing.status === 'free') {
-        detail = billing.free_until
-            ? `You're all set. Your card won't be charged until ${formatFreeUntil(billing.free_until)}.`
+        detail = firstCharge
+            ? `You're all set. Your card won't be charged until ${firstCharge}.`
             : "You're all set.";
     } else if (billing.status === 'canceled') {
         detail = billing.ends_at
@@ -412,8 +438,10 @@ function StatusDetail({
             "We couldn't collect your last payment. Update your card in Manage billing to avoid interruption.";
     } else if (billing.status === 'active') {
         detail = 'Your subscription renews automatically each month.';
+    } else if (billing.status === 'free_plan') {
+        detail = `The time clock and timesheets for up to ${billing.free_employee_limit} people, free for good. Pick a paid plan any time for more.`;
     } else {
-        detail = 'Continue with a plan to keep your data going.';
+        detail = `${billing.active_employee_count} people are active and the free plan covers ${billing.free_employee_limit}. Deactivate people or continue with a paid plan.`;
     }
 
     return <p className="text-sm text-muted-foreground">{detail}</p>;

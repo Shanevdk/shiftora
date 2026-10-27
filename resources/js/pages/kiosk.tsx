@@ -214,7 +214,7 @@ export default function Kiosk({
                 />
                 <meta name="apple-mobile-web-app-title" content="Kiosk" />
             </Head>
-            <div className="flex min-h-svh flex-col bg-sidebar text-sidebar-foreground">
+            <div className="flex min-h-svh flex-col bg-panel text-panel-foreground">
                 <header className="flex items-center justify-between gap-4 px-4 py-4 sm:px-8">
                     <div className="flex min-w-0 items-center gap-3">
                         <span className="flex size-10 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-warm-white">
@@ -232,7 +232,7 @@ export default function Kiosk({
                             <p className="truncate font-semibold text-warm-white">
                                 {organization?.name}
                             </p>
-                            <p className="text-sm text-sidebar-foreground/60">
+                            <p className="text-sm text-panel-foreground/60">
                                 Time clock
                             </p>
                         </div>
@@ -242,7 +242,7 @@ export default function Kiosk({
                             <p className="text-2xl font-semibold text-warm-white tabular">
                                 {formatTime(now.toISOString(), timeZone)}
                             </p>
-                            <p className="text-xs text-sidebar-foreground/60">
+                            <p className="text-xs text-panel-foreground/60">
                                 {new Intl.DateTimeFormat(undefined, {
                                     weekday: 'long',
                                     month: 'long',
@@ -283,7 +283,7 @@ export default function Kiosk({
                 <InstallTip />
 
                 {sampleExitPin !== null && (
-                    <footer className="px-4 pb-6 text-center text-sm text-sidebar-foreground/60">
+                    <footer className="px-4 pb-6 text-center text-sm text-panel-foreground/60">
                         Demo PINs:{' '}
                         {samplePins
                             .map((sample) => `${sample.name} ${sample.pin}`)
@@ -310,7 +310,7 @@ function Keypad({
     onSubmit: () => void;
 }) {
     const keyClassName =
-        'flex h-16 items-center justify-center rounded-2xl bg-sidebar-accent text-2xl font-semibold text-warm-white transition active:scale-95 hover:bg-sidebar-accent/80 focus-visible:ring-[3px] focus-visible:ring-sidebar-ring focus-visible:outline-none sm:h-20 sm:text-3xl';
+        'flex h-16 items-center justify-center rounded-2xl bg-panel-accent text-2xl font-semibold text-warm-white transition active:scale-95 hover:bg-panel-accent/80 focus-visible:ring-[3px] focus-visible:ring-panel-ring focus-visible:outline-none sm:h-20 sm:text-3xl';
 
     return (
         <div className="flex w-full max-w-sm flex-col items-center gap-6">
@@ -318,7 +318,7 @@ function Keypad({
                 <h1 className="text-2xl font-semibold text-warm-white sm:text-3xl">
                     Enter your PIN
                 </h1>
-                <p className="text-sidebar-foreground/60">
+                <p className="text-panel-foreground/60">
                     to clock in, take a break or clock out
                 </p>
             </div>
@@ -333,9 +333,9 @@ function Keypad({
                     <span
                         key={index}
                         className={cn(
-                            'size-4 rounded-full border-2 border-sidebar-foreground/40 transition',
+                            'size-4 rounded-full border-2 border-panel-foreground/40 transition',
                             index < pin.length &&
-                                'border-sidebar-primary bg-sidebar-primary',
+                                'border-panel-primary bg-panel-primary',
                         )}
                     />
                 ))}
@@ -385,7 +385,7 @@ function Keypad({
 
             <Button
                 size="lg"
-                className="h-14 w-full rounded-2xl bg-sidebar-primary text-lg text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                className="h-14 w-full rounded-2xl bg-panel-primary text-lg text-panel-primary-foreground hover:bg-panel-primary/90"
                 disabled={pin.length < PIN_MIN_LENGTH || processing}
                 onClick={onSubmit}
             >
@@ -435,7 +435,7 @@ function EmployeeActions({
                 <h1 className="text-3xl font-semibold text-warm-white sm:text-4xl">
                     Hi, {employee.first_name}
                 </h1>
-                <p className="text-lg text-sidebar-foreground/70">{status}</p>
+                <p className="text-lg text-panel-foreground/70">{status}</p>
             </div>
 
             <div className="flex w-full flex-col gap-3 sm:flex-row">
@@ -443,7 +443,7 @@ function EmployeeActions({
                     <Button
                         className={cn(
                             actionClassName,
-                            'bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90',
+                            'bg-panel-primary text-panel-primary-foreground hover:bg-panel-primary/90',
                         )}
                         disabled={processing}
                         onClick={() => onAction('clock_in')}
@@ -471,7 +471,7 @@ function EmployeeActions({
                         <Button
                             className={cn(
                                 actionClassName,
-                                'bg-warm-white text-sidebar hover:bg-warm-white/90',
+                                'bg-warm-white text-panel hover:bg-warm-white/90',
                             )}
                             disabled={processing}
                             onClick={() => onAction('clock_out')}
@@ -489,7 +489,7 @@ function EmployeeActions({
 
             <button
                 type="button"
-                className="text-sidebar-foreground/70 underline-offset-4 hover:text-warm-white hover:underline"
+                className="text-panel-foreground/70 underline-offset-4 hover:text-warm-white hover:underline"
                 onClick={onCancel}
             >
                 Not you? Cancel
@@ -512,15 +512,13 @@ function Confirmation({
             className="flex max-w-lg flex-col items-center gap-6 text-center"
         >
             <CheckCircle2
-                className="size-24 text-sidebar-primary"
+                className="size-24 text-panel-primary"
                 aria-hidden="true"
             />
             <p className="text-2xl font-semibold text-warm-white sm:text-3xl">
                 {message}
             </p>
-            <p className="text-sidebar-foreground/60">
-                Tap for the next person
-            </p>
+            <p className="text-panel-foreground/60">Tap for the next person</p>
         </button>
     );
 }
@@ -535,7 +533,7 @@ function ExitPinSetup() {
                 <h1 className="text-2xl font-semibold text-warm-white sm:text-3xl">
                     Set your organization PIN
                 </h1>
-                <p className="text-sidebar-foreground/70">
+                <p className="text-panel-foreground/70">
                     Managers will need this PIN to leave the kiosk, so employees
                     can't get into your account. Admins can change it later in
                     organization settings.
@@ -558,7 +556,7 @@ function ExitPinSetup() {
                         <Button
                             type="submit"
                             size="lg"
-                            className="h-14 w-full rounded-2xl bg-sidebar-primary text-lg text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                            className="h-14 w-full rounded-2xl bg-panel-primary text-lg text-panel-primary-foreground hover:bg-panel-primary/90"
                             disabled={processing}
                         >
                             {processing && <Spinner />}
@@ -611,9 +609,9 @@ function InstallTip() {
     const isApple = /iPad|iPhone|iPod|Macintosh/.test(navigator.userAgent);
 
     return (
-        <div className="mx-4 mb-4 flex items-start gap-3 rounded-2xl bg-sidebar-accent p-4 text-sm sm:mx-auto sm:w-full sm:max-w-xl">
+        <div className="mx-4 mb-4 flex items-start gap-3 rounded-2xl bg-panel-accent p-4 text-sm sm:mx-auto sm:w-full sm:max-w-xl">
             <Smartphone
-                className="mt-0.5 size-5 shrink-0 text-sidebar-primary"
+                className="mt-0.5 size-5 shrink-0 text-panel-primary"
                 aria-hidden="true"
             />
             <p className="flex-1">
@@ -642,7 +640,7 @@ function InstallTip() {
             <button
                 type="button"
                 onClick={dismiss}
-                className="rounded-md p-1 text-sidebar-foreground/60 hover:text-warm-white"
+                className="rounded-md p-1 text-panel-foreground/60 hover:text-warm-white"
                 aria-label="Dismiss tip"
             >
                 <X className="size-4" />
@@ -658,7 +656,7 @@ function ExitKioskButton() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-warm-white"
+                    className="text-panel-foreground/70 hover:bg-panel-accent hover:text-warm-white"
                 >
                     <Lock />
                     <span className="hidden sm:inline">Exit kiosk</span>

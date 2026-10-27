@@ -60,6 +60,14 @@
     --color-sidebar-border: var(--sidebar-border);
     --color-sidebar-ring: var(--sidebar-ring);
 
+    /* Always-dark charcoal surfaces (kiosk, landing page bands, banners), whatever the theme. */
+    --color-panel: var(--panel);
+    --color-panel-foreground: var(--panel-foreground);
+    --color-panel-primary: var(--panel-primary);
+    --color-panel-primary-foreground: var(--panel-primary-foreground);
+    --color-panel-accent: var(--panel-accent);
+    --color-panel-border: var(--panel-border);
+
     /* Shiftora brand palette */
     --color-charcoal: #1e2124;
     --color-warm-white: #faf8f3;
@@ -75,7 +83,7 @@
 
 /*
  * Shiftora design tokens.
- * Light: warm-white canvas, charcoal text and chrome, slate-grey secondary text, forest-green actions.
+ * Light: warm-white canvas, white sidebar, charcoal text, slate-grey secondary text, forest-green actions.
  * Dark: charcoal canvas with warm-white text and a lifted forest green for contrast.
  */
 :root {
@@ -108,14 +116,20 @@
     --chart-4: #c08a3e;
     --chart-5: #1e2124;
     --radius: 0.625rem;
-    --sidebar: #1e2124;
-    --sidebar-foreground: #e9e6df;
-    --sidebar-primary: #4fa37a;
+    --sidebar: #ffffff;
+    --sidebar-foreground: #1e2124;
+    --sidebar-primary: #2d6a4f;
     --sidebar-primary-foreground: #faf8f3;
-    --sidebar-accent: #2b2f33;
-    --sidebar-accent-foreground: #faf8f3;
-    --sidebar-border: #33383d;
-    --sidebar-ring: #4fa37a;
+    --sidebar-accent: #f1eee7;
+    --sidebar-accent-foreground: #1e2124;
+    --sidebar-border: #e4e0d6;
+    --sidebar-ring: #2d6a4f;
+    --panel: #1e2124;
+    --panel-foreground: #e9e6df;
+    --panel-primary: #4fa37a;
+    --panel-primary-foreground: #faf8f3;
+    --panel-accent: #2b2f33;
+    --panel-border: #33383d;
 }
 
 .dark {
@@ -155,6 +169,12 @@
     --sidebar-accent-foreground: #faf8f3;
     --sidebar-border: #2a2e33;
     --sidebar-ring: #4fa37a;
+    --panel: #101214;
+    --panel-foreground: #e9e6df;
+    --panel-primary: #4fa37a;
+    --panel-primary-foreground: #0f1a14;
+    --panel-accent: #23272b;
+    --panel-border: #2a2e33;
 }
 
 @layer base {

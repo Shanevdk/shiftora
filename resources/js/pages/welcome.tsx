@@ -2,15 +2,18 @@ import { Head, Link, usePage } from '@inertiajs/react';
 import {
     ArrowRight,
     BarChart3,
+    Briefcase,
     CalendarDays,
     Check,
     ClipboardCheck,
     Clock,
     MapPin,
+    Smartphone,
     Tablet,
 } from 'lucide-react';
 import AppLogoIcon from '@/components/app-logo-icon';
 import LiveDemo from '@/components/live-demo';
+import LiveDemoFrame from '@/components/live-demo-frame';
 import SiteFooter from '@/components/site-footer';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatPrice } from '@/lib/time';
@@ -91,6 +94,12 @@ export default function Welcome({
                     </Link>
                     <nav className="flex items-center gap-2">
                         <a
+                            href="#demo"
+                            className="hidden px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:inline"
+                        >
+                            Demo
+                        </a>
+                        <a
                             href="#pricing"
                             className="hidden px-3 py-2 text-sm text-muted-foreground hover:text-foreground sm:inline"
                         >
@@ -159,6 +168,23 @@ export default function Welcome({
                         <ProductPreview />
                     </section>
 
+                    <WhoUsesIt />
+
+                    <section id="demo" className="scroll-mt-8 border-t bg-card">
+                        <div className="mx-auto w-full max-w-6xl space-y-10 px-4 py-20 md:px-6">
+                            <div className="mx-auto max-w-2xl space-y-3 text-center">
+                                <h2 className="text-3xl font-semibold tracking-tight">
+                                    Take it for a spin
+                                </h2>
+                                <p className="text-muted-foreground">
+                                    This is the real Shiftora, not a video. No
+                                    account needed.
+                                </p>
+                            </div>
+                            <LiveDemoFrame />
+                        </div>
+                    </section>
+
                     <section className="border-y bg-card">
                         <div className="mx-auto w-full max-w-6xl px-4 py-20 md:px-6">
                             <div className="max-w-2xl space-y-3">
@@ -203,7 +229,8 @@ export default function Welcome({
                                 Pricing
                             </h2>
                             <p className="text-muted-foreground">
-                                You pay for each active employee, every month
+                                Keep the free plan for as long as you like, or
+                                pay for each active employee, every month
                                 {plans[0]
                                     ? `, in ${plans[0].currency}`
                                     : ''}.{' '}
@@ -213,7 +240,7 @@ export default function Welcome({
                             </p>
                         </div>
                         {freeUntil && <FreePromotionBanner until={freeUntil} />}
-                        <div className="mt-12 grid gap-6 lg:grid-cols-3">
+                        <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
                             {plans.map((plan) => (
                                 <PlanCard
                                     key={plan.value}
@@ -229,20 +256,20 @@ export default function Welcome({
                         </div>
                     </section>
 
-                    <section className="bg-sidebar text-sidebar-foreground">
+                    <section className="bg-panel text-panel-foreground">
                         <div className="mx-auto flex w-full max-w-6xl flex-col items-start justify-between gap-6 px-4 py-16 md:flex-row md:items-center md:px-6">
                             <div className="space-y-2">
                                 <h2 className="text-2xl font-semibold tracking-tight text-warm-white">
                                     Try it with your own team
                                 </h2>
-                                <p className="text-sidebar-foreground/70">
+                                <p className="text-panel-foreground/70">
                                     Free to start. No credit card and nothing to
                                     install.
                                 </p>
                             </div>
                             <Button
                                 size="lg"
-                                className="bg-sidebar-primary text-sidebar-primary-foreground hover:bg-sidebar-primary/90"
+                                className="bg-panel-primary text-panel-primary-foreground hover:bg-panel-primary/90"
                                 asChild
                             >
                                 <Link href={customer ? dashboard() : startFree}>
@@ -256,6 +283,79 @@ export default function Welcome({
                 <SiteFooter />
             </div>
         </>
+    );
+}
+
+/**
+ * Makes clear there are two sides: the business that sets it up and pays, and the staff who use it
+ * every shift. Both log in from the same page and Shiftora shows each what they need.
+ */
+function WhoUsesIt() {
+    // Draft copy: rewrite in your own voice.
+    const audiences = [
+        {
+            icon: Briefcase,
+            title: 'For owners and managers',
+            points: [
+                'Add your team and send them an invite',
+                'Build the week and publish the schedule',
+                "See who's working right now",
+                'Approve timesheets and export for payroll',
+            ],
+        },
+        {
+            icon: Smartphone,
+            title: 'For your staff',
+            points: [
+                'Get an email invite, with nothing to install',
+                'Clock in from their phone or a shared tablet',
+                'See their upcoming shifts',
+                'Send in their week for approval',
+            ],
+        },
+    ];
+
+    return (
+        <section className="mx-auto w-full max-w-6xl px-4 pb-20 md:px-6">
+            <div className="grid gap-6 md:grid-cols-2">
+                {audiences.map((audience) => (
+                    <div
+                        key={audience.title}
+                        className="space-y-4 rounded-2xl border bg-card p-6"
+                    >
+                        <div className="flex items-center gap-3">
+                            <span className="flex size-10 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+                                <audience.icon
+                                    className="size-5"
+                                    aria-hidden="true"
+                                />
+                            </span>
+                            <h2 className="text-lg font-semibold">
+                                {audience.title}
+                            </h2>
+                        </div>
+                        <ul className="space-y-2 text-sm">
+                            {audience.points.map((point) => (
+                                <li
+                                    key={point}
+                                    className="flex items-start gap-2"
+                                >
+                                    <Check
+                                        className="mt-0.5 size-4 shrink-0 text-primary"
+                                        aria-hidden="true"
+                                    />
+                                    {point}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                ))}
+            </div>
+            <p className="mt-4 text-center text-sm text-muted-foreground">
+                Everyone logs in from the same page. Shiftora shows each person
+                what they need.
+            </p>
+        </section>
     );
 }
 
@@ -290,6 +390,8 @@ function PlanCard({
     featured: boolean;
     ctaHref: string;
 }) {
+    const isFree = plan.price_per_employee_cents === 0;
+
     return (
         <div
             className={cn(
@@ -305,10 +407,15 @@ function PlanCard({
             </div>
             <div className="flex flex-wrap items-baseline gap-x-1.5">
                 <span className="text-4xl font-semibold tracking-tight tabular">
-                    {formatPrice(plan.price_per_employee_cents, plan.currency)}
+                    {isFree
+                        ? 'Free'
+                        : formatPrice(
+                              plan.price_per_employee_cents,
+                              plan.currency,
+                          )}
                 </span>
                 <span className="text-sm text-muted-foreground">
-                    / employee / month
+                    {isFree ? 'for good' : '/ employee / month'}
                 </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -332,7 +439,9 @@ function PlanCard({
                 ))}
             </ul>
             <Button variant={featured ? 'default' : 'outline'} asChild>
-                <Link href={ctaHref}>Try it free</Link>
+                <Link href={ctaHref}>
+                    {isFree ? 'Start free' : 'Try it free'}
+                </Link>
             </Button>
         </div>
     );
@@ -353,16 +462,16 @@ function ProductPreview() {
         <div className="relative" aria-hidden="true">
             <div className="absolute -inset-4 -z-10 rounded-[2rem] bg-accent/70 blur-2xl" />
             <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-xl">
-                <div className="flex items-center justify-between rounded-xl bg-sidebar p-4 text-sidebar-foreground">
+                <div className="flex items-center justify-between rounded-xl bg-panel p-4 text-panel-foreground">
                     <div>
-                        <p className="text-xs text-sidebar-foreground/60">
+                        <p className="text-xs text-panel-foreground/60">
                             Clocked in since 8:58 AM
                         </p>
                         <p className="text-3xl font-semibold tabular">
                             4:12:36
                         </p>
                     </div>
-                    <span className="rounded-lg bg-sidebar-primary px-4 py-2 text-sm font-medium text-sidebar-primary-foreground">
+                    <span className="rounded-lg bg-panel-primary px-4 py-2 text-sm font-medium text-panel-primary-foreground">
                         Clock out
                     </span>
                 </div>

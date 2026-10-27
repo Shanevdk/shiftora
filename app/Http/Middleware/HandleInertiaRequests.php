@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Enums\Feature;
+use App\Enums\Plan;
 use App\Models\Employee;
 use App\Models\Organization;
 use App\Support\CurrentOrganization;
@@ -130,7 +131,7 @@ class HandleInertiaRequests extends Middleware
     }
 
     /**
-     * @return array{plan: string|null, plan_name: string|null, status: string, trial_days_remaining: int|null, features: list<string>}|null
+     * @return array{plan: string, plan_name: string, status: string, trial_days_remaining: int|null, free_employee_limit: int|null, active_employee_count: int|null, features: list<string>}|null
      */
     private function subscription(Request $request): ?array
     {
@@ -141,16 +142,21 @@ class HandleInertiaRequests extends Middleware
         }
 
         $plan = $organization->activePlan();
+        $isReadOnly = $organization->isReadOnly();
 
         return [
-            'plan' => $plan?->value,
-            'plan_name' => $plan?->label(),
+            'plan' => $plan->value,
+            'plan_name' => $plan->label(),
             'status' => match (true) {
                 $organization->isSubscribed() => 'active',
-                $plan !== null => 'trial',
-                default => 'inactive',
+                $organization->onGenericTrial() => 'trial',
+                $isReadOnly => 'inactive',
+                default => 'free_plan',
             },
             'trial_days_remaining' => $organization->trialDaysRemaining(),
+            'free_employee_limit' => Plan::Free->employeeLimit(),
+            // Only needed to explain a read-only workspace, so it isn't counted on every request.
+            'active_employee_count' => $isReadOnly ? $organization->activeEmployeeCount() : null,
             // A read-only workspace keeps showing what it had, so nothing seems to disappear.
             'features' => array_map(fn (Feature $feature): string => $feature->value, $organization->visiblePlan()->features()),
         ];

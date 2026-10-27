@@ -154,9 +154,10 @@ class Organization extends Model
     public const TRIAL_PLAN = Plan::Business;
 
     /**
-     * The plan whose entitlements currently apply, or null when access has lapsed.
+     * The plan whose entitlements currently apply: the subscription's, everything during the trial,
+     * or else the free plan, so nobody has to pay to keep using Shiftora.
      */
-    public function activePlan(): ?Plan
+    public function activePlan(): Plan
     {
         $subscription = $this->subscription(config('shiftora.subscription_type'));
 
@@ -168,19 +169,34 @@ class Organization extends Model
             return self::TRIAL_PLAN;
         }
 
-        return null;
+        return Plan::Free;
     }
 
     /**
-     * The plan whose features the workspace shows. Once access lapses the workspace stays readable
-     * with what it had: everything after a trial, or the plan of the subscription that ended.
+     * Whether the organization is using Shiftora without paying, after its trial or subscription.
+     */
+    public function isOnFreePlan(): bool
+    {
+        return $this->activePlan() === Plan::Free;
+    }
+
+    /**
+     * Whether a free workspace has more active people than the free plan allows. It can still be
+     * viewed but not changed until the owner deactivates people or picks a paid plan.
+     */
+    public function isReadOnly(): bool
+    {
+        return $this->isOnFreePlan() && $this->activeEmployeeCount() > Plan::Free->employeeLimit();
+    }
+
+    /**
+     * The plan whose features the workspace shows. A read-only workspace keeps showing what it had
+     * (everything after a trial, or the plan of the subscription that ended), so nothing seems lost.
      */
     public function visiblePlan(): Plan
     {
-        $activePlan = $this->activePlan();
-
-        if ($activePlan !== null) {
-            return $activePlan;
+        if (! $this->isReadOnly()) {
+            return $this->activePlan();
         }
 
         $subscription = $this->subscription(config('shiftora.subscription_type'));
@@ -188,14 +204,6 @@ class Organization extends Model
         return $subscription === null
             ? self::TRIAL_PLAN
             : (Plan::fromStripePrice($subscription->stripe_price) ?? $this->plan);
-    }
-
-    /**
-     * Whether access has lapsed. A read-only workspace can be viewed but not changed until the owner continues.
-     */
-    public function isReadOnly(): bool
-    {
-        return ! $this->hasActiveAccess();
     }
 
     /**
@@ -226,9 +234,26 @@ class Organization extends Model
         return self::onFreePromotion() ? $trialEndsAt->max(self::freeUntil()) : $trialEndsAt;
     }
 
+    /**
+     * When a subscription started now would first be charged: once the launch promotion ends, or
+     * else once the no-card trial would have, so subscribing early never costs trial days. Null
+     * when it would be charged straight away.
+     */
+    public function firstChargeAt(): ?CarbonInterface
+    {
+        $trialEndsAt = match (true) {
+            self::onFreePromotion() => self::freeUntil(),
+            $this->onGenericTrial() => $this->trial_ends_at,
+            default => null,
+        };
+
+        // Stripe Checkout only accepts a trial end at least 48 hours away.
+        return $trialEndsAt?->isAfter(now()->addDays(2)) ? $trialEndsAt : null;
+    }
+
     public function hasActiveAccess(): bool
     {
-        return $this->activePlan() !== null;
+        return ! $this->isReadOnly();
     }
 
     /**

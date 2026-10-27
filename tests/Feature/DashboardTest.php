@@ -43,8 +43,10 @@ test('managers get a deferred team overview', function () {
                 ->has('team.clockedIn', 0)));
 });
 
-test('members of an organization whose trial has ended still see their dashboard, read-only', function () {
-    $this->actingAs(member(Role::Employee, Organization::factory()->trialExpired()->create()));
+test('members of a free workspace with more people than the plan covers still see everything, read-only', function () {
+    $organization = Organization::factory()->trialExpired()->create();
+    $this->actingAs(member(Role::Employee, $organization));
+    Employee::factory()->for($organization)->count(5)->create();
 
     $this->get(route('dashboard'))
         ->assertOk()

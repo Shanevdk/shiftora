@@ -35,15 +35,10 @@ class StartCheckout
             ->newSubscription(config('shiftora.subscription_type'), $plan->stripePrice())
             ->quantity(max(1, $organization->activeEmployeeCount()));
 
-        $trialEndsAt = match (true) {
-            Organization::onFreePromotion() => Organization::freeUntil(),
-            $organization->onGenericTrial() => $organization->trial_ends_at,
-            default => null,
-        };
+        $firstChargeAt = $organization->firstChargeAt();
 
-        // Stripe Checkout only accepts a trial end at least 48 hours away.
-        if ($trialEndsAt?->isAfter(now()->addDays(2))) {
-            $builder->trialUntil($trialEndsAt);
+        if ($firstChargeAt !== null) {
+            $builder->trialUntil($firstChargeAt);
         }
 
         $checkout = $builder->checkout([

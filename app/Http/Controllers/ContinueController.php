@@ -17,7 +17,7 @@ use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as SymfonyResponse;
 
 /**
- * Where a trial (or a lapsed workspace) becomes a subscription. Paying is framed as keeping what the
+ * Where a trial or a free workspace becomes a subscription. Paying is framed as keeping what the
  * owner has already built, with the plan that fits how they have used Shiftora picked for them.
  */
 class ContinueController extends Controller
@@ -49,7 +49,7 @@ class ContinueController extends Controller
                     fn (Feature $feature): string => $feature->label(),
                     PlanAdvisor::missingFeatures($plan, $usedFeatures),
                 ),
-            ], Plan::cases()),
+            ], Plan::paid()),
             'recommendedPlan' => PlanAdvisor::recommend($organization)->value,
             'usage' => [
                 'active_employees' => $activeEmployees,
@@ -58,8 +58,11 @@ class ContinueController extends Controller
                 'time_entries' => $organization->timeEntries()->count(),
             ],
             'isReadOnly' => $organization->isReadOnly(),
+            'isOnFreePlan' => $organization->isOnFreePlan(),
+            'freeEmployeeLimit' => Plan::Free->employeeLimit(),
             'trialEndsAt' => $organization->trial_ends_at?->toIso8601String(),
             'freeUntil' => Organization::onFreePromotion() ? Organization::freeUntil()->toIso8601String() : null,
+            'firstChargeAt' => $organization->firstChargeAt()?->toIso8601String(),
             'billingConfigured' => filled(config('cashier.secret')),
         ]);
     }
@@ -77,7 +80,7 @@ class ContinueController extends Controller
             return to_route('billing.edit');
         }
 
-        $validated = $request->validate(['plan' => ['nullable', Rule::enum(Plan::class)]]);
+        $validated = $request->validate(['plan' => ['nullable', Rule::enum(Plan::class)->only(Plan::paid())]]);
         $plan = isset($validated['plan']) ? Plan::from($validated['plan']) : PlanAdvisor::recommend($organization);
 
         if (blank(config('cashier.secret')) || $plan->stripePrice() === null) {

@@ -7,7 +7,7 @@ export default function AppLogo() {
 
     return (
         <>
-            <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-warm-white">
+            <div className="flex aspect-square size-8 items-center justify-center overflow-hidden rounded-md bg-warm-white ring-1 ring-sidebar-border">
                 {organization?.logo_url ? (
                     <img
                         src={organization.logo_url}

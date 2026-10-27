@@ -37,21 +37,29 @@ class BillingController extends Controller
             'plans' => array_map(fn (Plan $plan): array => [
                 ...$plan->toArray(),
                 'available' => $plan->stripePrice() !== null,
-            ], Plan::cases()),
+            ], Plan::paid()),
             'billing' => [
-                'plan' => $isSubscribed ? $organization->activePlan()?->value : null,
+                'plan' => $isSubscribed ? $organization->activePlan()->value : null,
                 'recommended_plan' => $isSubscribed ? null : PlanAdvisor::recommend($organization)->value,
                 'status' => match (true) {
                     $subscription?->onGracePeriod() => 'canceled',
                     $subscription?->pastDue() => 'past_due',
-                    $subscription?->onTrial() && Organization::onFreePromotion() => 'free',
+                    $subscription?->onTrial() => 'free',
                     $isSubscribed => 'active',
-                    $organization->hasActiveAccess() => 'trial',
-                    default => 'inactive',
+                    $organization->onGenericTrial() => 'trial',
+                    $organization->isReadOnly() => 'inactive',
+                    default => 'free_plan',
                 },
+                'free_employee_limit' => Plan::Free->employeeLimit(),
                 'trial_ends_at' => $organization->trial_ends_at?->toIso8601String(),
                 'free_until' => Organization::onFreePromotion() ? Organization::freeUntil()->toIso8601String() : null,
                 'trial_days_remaining' => $organization->trialDaysRemaining(),
+                // A subscription still on its trial, or one started now, isn't charged until the trial ends.
+                'first_charge_at' => (match (true) {
+                    $subscription?->onTrial() => $subscription->trial_ends_at,
+                    $isSubscribed => null,
+                    default => $organization->firstChargeAt(),
+                })?->toIso8601String(),
                 'ends_at' => $subscription?->ends_at?->toIso8601String(),
                 'quantity' => $subscription?->quantity,
                 'card_last_four' => $organization->pm_last_four,
@@ -72,7 +80,7 @@ class BillingController extends Controller
 
         Gate::authorize('manageBilling', $organization);
 
-        $plan = Plan::from($request->validate(['plan' => ['required', Rule::enum(Plan::class)]])['plan']);
+        $plan = Plan::from($request->validate(['plan' => ['required', Rule::enum(Plan::class)->only(Plan::paid())]])['plan']);
 
         return $this->stripe(fn (): SymfonyResponse => Inertia::location(
             $startCheckout->handle($organization, $plan, route('billing.edit')),
@@ -129,7 +137,7 @@ class BillingController extends Controller
 
     private function validatedPlan(Request $request): Plan
     {
-        $plan = Plan::from($request->validate(['plan' => ['required', Rule::enum(Plan::class)]])['plan']);
+        $plan = Plan::from($request->validate(['plan' => ['required', Rule::enum(Plan::class)->only(Plan::paid())]])['plan']);
 
         if ($plan->stripePrice() === null) {
             throw ValidationException::withMessages(['plan' => __('Billing for this plan is not configured yet.')]);

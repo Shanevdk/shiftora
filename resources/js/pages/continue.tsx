@@ -36,8 +36,13 @@ type Props = {
         time_entries: number;
     };
     isReadOnly: boolean;
+    /** Using Shiftora for free after the trial; paying is optional. */
+    isOnFreePlan: boolean;
+    freeEmployeeLimit: number;
     trialEndsAt: string | null;
     freeUntil: string | null;
+    /** When a subscription started now is first charged; null when it's charged straight away. */
+    firstChargeAt: string | null;
     billingConfigured: boolean;
 };
 
@@ -56,8 +61,11 @@ export default function Continue({
     recommendedPlan,
     usage,
     isReadOnly,
+    isOnFreePlan,
+    freeEmployeeLimit,
     trialEndsAt,
     freeUntil,
+    firstChargeAt,
     billingConfigured,
 }: Props) {
     const { organization, timeZone } = useWorkspace();
@@ -72,15 +80,19 @@ export default function Continue({
                 <PageHeader
                     title={
                         isReadOnly
-                            ? 'Keep your workspace going'
-                            : 'Continue with Shiftora'
+                            ? 'Keep your whole team going'
+                            : isOnFreePlan
+                              ? 'Get more with a paid plan'
+                              : 'Continue with Shiftora'
                     }
                     description={
                         isReadOnly
-                            ? `Your free trial has ended, so ${organization?.name ?? 'your workspace'} is read-only. Pick a plan and everything carries on where you left off.`
-                            : trialEndsAt
-                              ? `Your free trial ends ${formatDateTimeDay(trialEndsAt, timeZone, longDate)}. Pick a plan now and nothing changes for your team.`
-                              : 'Pick a plan and nothing changes for your team.'
+                            ? `${usage.active_employees} people are active and the free plan covers ${freeEmployeeLimit}, so ${organization?.name ?? 'your workspace'} is read-only. Pick a plan and everything carries on, or deactivate people on the Team page.`
+                            : isOnFreePlan
+                              ? `You're on the free plan: the time clock and timesheets for up to ${freeEmployeeLimit} people, for as long as you like. A paid plan adds more people and everything else.`
+                              : trialEndsAt
+                                ? `Your free trial ends ${formatDateTimeDay(trialEndsAt, timeZone, longDate)}. Pick a plan now and nothing changes for your team.`
+                                : 'Pick a plan and nothing changes for your team.'
                     }
                 />
 
@@ -185,10 +197,21 @@ export default function Continue({
                             }
                         />
 
-                        {freeUntil && (
+                        {firstChargeAt && (
                             <p className="text-sm text-muted-foreground">
                                 You won't be charged until{' '}
-                                {formatDateTimeDay(freeUntil, 'UTC', longDate)}.
+                                {freeUntil
+                                    ? formatDateTimeDay(
+                                          freeUntil,
+                                          'UTC',
+                                          longDate,
+                                      )
+                                    : formatDateTimeDay(
+                                          firstChargeAt,
+                                          timeZone,
+                                          longDate,
+                                      )}
+                                .
                             </p>
                         )}
                     </section>

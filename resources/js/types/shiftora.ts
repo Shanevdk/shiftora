@@ -19,7 +19,7 @@ export type FeatureKey =
     | 'multiple_locations'
     | 'priority_support';
 
-export type PlanKey = 'starter' | 'professional' | 'business';
+export type PlanKey = 'free' | 'starter' | 'professional' | 'business';
 
 export type OrganizationSummary = {
     id: number;
@@ -47,10 +47,14 @@ export type Membership = {
 };
 
 export type SubscriptionState = {
-    plan: PlanKey | null;
-    plan_name: string | null;
-    status: 'active' | 'trial' | 'inactive';
+    plan: PlanKey;
+    plan_name: string;
+    /** On the free plan with more active people than it allows, the workspace is 'inactive' (read-only). */
+    status: 'active' | 'trial' | 'free_plan' | 'inactive';
     trial_days_remaining: number | null;
+    free_employee_limit: number | null;
+    /** Only sent while the workspace is read-only. */
+    active_employee_count: number | null;
     features: FeatureKey[];
 };
 
